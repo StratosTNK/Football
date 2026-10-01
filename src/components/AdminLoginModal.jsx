@@ -116,23 +116,20 @@ export default function AdminLoginModal({
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '6px' }}>
-                💡 Mật khẩu mặc định: <strong>admin123</strong>
-              </div>
             </div>
+          </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                style={{ flex: 1, padding: '10px' }}
-                disabled={loading}
-              >
-                <KeyRound size={16} />
-                {loading ? 'Đang kiểm tra...' : 'Xác Nhận Đăng Nhập'}
-              </button>
-            </div>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              style={{ flex: 1, padding: '10px' }}
+              disabled={loading}
+            >
+              <KeyRound size={16} />
+              {loading ? 'Đang kiểm tra...' : 'Xác Nhận Đăng Nhập'}
+            </button>
+          </div>
         </form>
       </div>
     </div>
