@@ -56,25 +56,46 @@ export default function App() {
     }
   };
 
-  // Fetch initial match data
-  const fetchMatch = async () => {
+  const prevStatusRef = useRef(null);
+
+  // Fetch match data
+  const fetchMatch = async (silent = false) => {
     try {
       const res = await fetch('/api/match');
+      if (!res.ok) return;
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.data) {
         setMatch(data.data);
       }
     } catch (err) {
-      console.error('Lỗi tải dữ liệu trận:', err);
+      if (!silent) {
+        console.error('Lỗi tải dữ liệu trận:', err);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     fetchMatch();
 
-    // Listen to realtime socket updates
+    // Auto sync every 3 seconds for all players on different devices
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchMatch(true);
+      }
+    }, 3000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchMatch(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Listen to realtime socket updates if running local socket server
     socket.on('match_updated', (updatedData) => {
       setMatch(updatedData);
     });
@@ -84,10 +105,22 @@ export default function App() {
     });
 
     return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       socket.off('match_updated');
       socket.off('celebrate_split');
     };
   }, []);
+
+  // When match status changes to BALANCED from OPEN, celebrate with confetti
+  useEffect(() => {
+    if (match) {
+      if (prevStatusRef.current === 'OPEN' && match.status === 'BALANCED') {
+        triggerConfetti();
+      }
+      prevStatusRef.current = match.status;
+    }
+  }, [match?.status]);
 
   // --- API Handlers ---
 
@@ -102,6 +135,9 @@ export default function App() {
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Không thể điểm danh!');
     }
+    if (data.data) {
+      setMatch(data.data);
+    }
     return data;
   };
 
@@ -115,6 +151,9 @@ export default function App() {
     const data = await res.json();
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Không thể hủy điểm danh!');
+    }
+    if (data.data) {
+      setMatch(data.data);
     }
     return data;
   };
@@ -159,6 +198,9 @@ export default function App() {
     }
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Lỗi xử lý yêu cầu.');
+    }
+    if (data.data) {
+      setMatch(data.data);
     }
     return data;
   };
