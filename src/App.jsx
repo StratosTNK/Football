@@ -30,6 +30,37 @@ export default function App() {
   const [adminToken, setAdminToken] = useState(localStorage.getItem('football_admin_token') || '');
   const isAdmin = Boolean(adminToken);
 
+  // Track players added on this device reactively
+  const [myAddedIds, setMyAddedIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('my_added_players') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const recordAddedPlayerId = (id) => {
+    if (!id) return;
+    setMyAddedIds((prev) => {
+      const updated = prev.includes(id) ? prev : [...prev, id];
+      try {
+        localStorage.setItem('my_added_players', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const removeAddedPlayerId = (id) => {
+    if (!id) return;
+    setMyAddedIds((prev) => {
+      const updated = prev.filter((item) => item !== id);
+      try {
+        localStorage.setItem('my_added_players', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
   // Modals state
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -135,6 +166,9 @@ export default function App() {
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Không thể điểm danh!');
     }
+    if (data.player?.id) {
+      recordAddedPlayerId(data.player.id);
+    }
     if (data.data) {
       setMatch(data.data);
     }
@@ -152,6 +186,7 @@ export default function App() {
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Không thể hủy điểm danh!');
     }
+    removeAddedPlayerId(playerId);
     if (data.data) {
       setMatch(data.data);
     }
@@ -234,6 +269,7 @@ export default function App() {
 
   // 10. Admin Delete Player
   const handleDeletePlayer = async (playerId) => {
+    removeAddedPlayerId(playerId);
     return adminFetch('/api/admin/delete-player', { playerId });
   };
 
@@ -337,6 +373,7 @@ export default function App() {
                 <PlayerList 
                   match={match}
                   isAdmin={isAdmin}
+                  myAddedIds={myAddedIds}
                   onEditPlayer={handleEditPlayer}
                   onDeletePlayer={handleDeletePlayer}
                   onLeavePlayer={handleLeave}
@@ -358,6 +395,7 @@ export default function App() {
             <PlayerList 
               match={match}
               isAdmin={isAdmin}
+              myAddedIds={myAddedIds}
               onEditPlayer={handleEditPlayer}
               onDeletePlayer={handleDeletePlayer}
               onLeavePlayer={handleLeave}

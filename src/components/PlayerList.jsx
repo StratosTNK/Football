@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Users, Edit2, Trash2, Check, X, Shuffle } from 'lucide-react';
+import { Users, Edit2, Trash2, Check, X, Shuffle, AlertCircle } from 'lucide-react';
 
 export default function PlayerList({ 
   match, 
   isAdmin, 
+  myAddedIds = [],
   onEditPlayer, 
   onDeletePlayer,
   onLeavePlayer,
@@ -13,11 +14,8 @@ export default function PlayerList({
   const { players = [] } = match;
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
-
-  let myAddedIds = [];
-  try {
-    myAddedIds = JSON.parse(localStorage.getItem('my_added_players') || '[]');
-  } catch {}
+  const [confirmPlayer, setConfirmPlayer] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const startEdit = (player) => {
     setEditingId(player.id);
@@ -43,25 +41,21 @@ export default function PlayerList({
     }
   };
 
-  const handleDelete = async (player) => {
-    if (window.confirm(`Xóa "${player.name}" khỏi danh sách?`)) {
-      try {
-        if (isAdmin && onDeletePlayer) {
-          await onDeletePlayer(player.id);
-        } else if (onLeavePlayer) {
-          await onLeavePlayer(player.id);
-        }
-        
-        try {
-          const myIds = JSON.parse(localStorage.getItem('my_added_players') || '[]');
-          const updated = myIds.filter(id => id !== player.id);
-          localStorage.setItem('my_added_players', JSON.stringify(updated));
-        } catch {}
-
-        showToast(`Đã xóa ${player.name}`);
-      } catch {
-        showToast('Lỗi khi xóa.');
+  const handleExecuteDelete = async () => {
+    if (!confirmPlayer) return;
+    setDeleting(true);
+    try {
+      if (isAdmin && onDeletePlayer) {
+        await onDeletePlayer(confirmPlayer.id);
+      } else if (onLeavePlayer) {
+        await onLeavePlayer(confirmPlayer.id);
       }
+      showToast(`Đã xóa "${confirmPlayer.name}" khỏi danh sách.`);
+      setConfirmPlayer(null);
+    } catch (err) {
+      showToast(err.message || 'Lỗi khi xóa cầu thủ.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -98,7 +92,8 @@ export default function PlayerList({
           {players.map((player, idx) => {
             const isEditing = editingId === player.id;
             const isMyAdded = myAddedIds.includes(player.id);
-            const canRemove = isAdmin || isMyAdded;
+            // Can remove: Admin can remove anytime; Guests can remove when match is OPEN
+            const canRemove = isAdmin || match.status === 'OPEN';
 
             return (
               <div key={player.id} className="player-item">
@@ -143,9 +138,17 @@ export default function PlayerList({
                         <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>
                           {player.name}
                         </span>
-                        {isMyAdded && !isAdmin && (
-                          <span style={{ fontSize: '0.68rem', color: 'var(--emerald)', marginLeft: '4px' }}>
-                            (Bạn thêm)
+                        {isMyAdded && (
+                          <span style={{ 
+                            fontSize: '0.68rem', 
+                            color: 'var(--emerald)', 
+                            background: 'rgba(0, 242, 152, 0.12)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            marginLeft: '6px',
+                            fontWeight: 700
+                          }}>
+                            Bạn
                           </span>
                         )}
                       </div>
@@ -155,7 +158,7 @@ export default function PlayerList({
                       {isAdmin && (
                         <button 
                           onClick={() => startEdit(player)}
-                          style={{ background: 'none', border: 'none', color: '#FFA502', cursor: 'pointer', padding: '2px' }}
+                          style={{ background: 'none', border: 'none', color: '#FFA502', cursor: 'pointer', padding: '4px' }}
                           title="Sửa tên"
                         >
                           <Edit2 size={13} />
@@ -164,11 +167,22 @@ export default function PlayerList({
 
                       {canRemove && (
                         <button 
-                          onClick={() => handleDelete(player)}
-                          style={{ background: 'none', border: 'none', color: '#FF6B81', cursor: 'pointer', padding: '2px' }}
-                          title={isMyAdded ? 'Hủy người bạn vừa thêm' : 'Xóa cầu thủ'}
+                          onClick={() => setConfirmPlayer(player)}
+                          style={{ 
+                            background: isMyAdded ? 'rgba(255, 107, 129, 0.15)' : 'none', 
+                            border: isMyAdded ? '1px solid rgba(255, 107, 129, 0.3)' : 'none', 
+                            color: '#FF6B81', 
+                            cursor: 'pointer', 
+                            padding: isMyAdded ? '3px 7px' : '4px',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}
+                          title={isMyAdded ? 'Hủy đăng ký của bạn' : 'Hủy đăng ký cầu thủ này'}
                         >
                           <Trash2 size={13} />
+                          {isMyAdded && <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>Hủy</span>}
                         </button>
                       )}
                     </div>
@@ -177,6 +191,60 @@ export default function PlayerList({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Sleek In-App Confirmation Modal (Fixes window.confirm blocked on mobile/Zalo) */}
+      {confirmPlayer && (
+        <div className="modal-overlay" onClick={() => !deleting && setConfirmPlayer(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '350px', textAlign: 'center' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '50%',
+              background: 'rgba(255, 107, 129, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 12px auto',
+              color: '#FF6B81'
+            }}>
+              <AlertCircle size={24} />
+            </div>
+
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
+              Hủy Điểm Danh?
+            </h3>
+            
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.4 }}>
+              Bạn có chắc muốn xóa <strong style={{ color: '#fff' }}>"{confirmPlayer.name}"</strong> khỏi danh sách trận đấu?
+            </p>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setConfirmPlayer(null)}
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '10px' }}
+                disabled={deleting}
+              >
+                Quay Lại
+              </button>
+              <button
+                onClick={handleExecuteDelete}
+                className="btn"
+                style={{ 
+                  flex: 1, 
+                  padding: '10px', 
+                  background: 'linear-gradient(135deg, #FF6B81, #EE5253)', 
+                  color: '#fff',
+                  fontWeight: 700 
+                }}
+                disabled={deleting}
+              >
+                {deleting ? 'Đang xóa...' : 'Xác Nhận Xóa'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

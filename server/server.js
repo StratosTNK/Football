@@ -94,7 +94,7 @@ app.post('/api/player/leave', (req, res) => {
   if (matchState.players.length !== initialCount) {
     saveMatchData(matchState);
     io.emit('match_updated', getPublicState());
-    return res.json({ success: true, message: 'Đã hủy đăng ký thành công.' });
+    return res.json({ success: true, message: 'Đã hủy đăng ký thành công.', data: getPublicState() });
   }
 
   res.status(404).json({ success: false, message: 'Không tìm thấy cầu thủ.' });
