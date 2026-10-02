@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "football",
+  "name": "dsu-thanhkhe",
   "compatibility_date": "2024-09-23",
   "main": "worker.js",
   "workers_dev": true,
