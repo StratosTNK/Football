@@ -32,12 +32,27 @@ const getDefaultMatchState = () => {
 // Global in-memory fallback
 let memoryState = null;
 
+function findKV(env) {
+  if (!env) return null;
+  if (env.MATCH_KV && typeof env.MATCH_KV.get === 'function') return env.MATCH_KV;
+  if (env.FOOTBALL_KV && typeof env.FOOTBALL_KV.get === 'function') return env.FOOTBALL_KV;
+  for (const [key, value] of Object.entries(env)) {
+    if (value && typeof value.get === 'function' && typeof value.put === 'function') {
+      return value;
+    }
+  }
+  return null;
+}
+
 async function getState(env) {
-  const kv = env?.MATCH_KV || env?.FOOTBALL_KV;
+  const kv = findKV(env);
   if (kv) {
     try {
       const data = await kv.get('current_match', 'json');
-      if (data) return data;
+      if (data && data.title) return data;
+      const initial = getDefaultMatchState();
+      await kv.put('current_match', JSON.stringify(initial));
+      return initial;
     } catch (e) {
       console.error('KV get error:', e);
     }
@@ -51,7 +66,7 @@ async function getState(env) {
 async function putState(env, data) {
   data.lastUpdated = new Date().toISOString();
   memoryState = data;
-  const kv = env?.MATCH_KV || env?.FOOTBALL_KV;
+  const kv = findKV(env);
   if (kv) {
     try {
       await kv.put('current_match', JSON.stringify(data));
@@ -61,11 +76,13 @@ async function putState(env, data) {
   }
 }
 
-function getPublicState(state) {
+function getPublicState(state, env) {
   const { adminPassword, ...publicData } = state;
+  const kv = findKV(env);
   return {
     ...publicData,
-    hasPasswordSet: Boolean(adminPassword)
+    hasPasswordSet: Boolean(adminPassword),
+    hasDatabase: Boolean(kv)
   };
 }
 
@@ -93,7 +110,7 @@ export async function onRequest(context) {
     if (method === 'GET' && (pathname === '/api/match' || pathname === '/api')) {
       return new Response(JSON.stringify({
         success: true,
-        data: getPublicState(state)
+        data: getPublicState(state, env)
       }), { headers: corsHeaders });
     }
 
@@ -151,7 +168,7 @@ export async function onRequest(context) {
 
       if (state.players.length !== initialCount) {
         await putState(env, state);
-        return new Response(JSON.stringify({ success: true, message: 'Đã hủy đăng ký thành công.', data: getPublicState(state) }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ success: true, message: 'Đã hủy đăng ký thành công.', data: getPublicState(state, env) }), { headers: corsHeaders });
       }
 
       return new Response(JSON.stringify({ success: false, message: 'Không tìm thấy cầu thủ.' }), { status: 404, headers: corsHeaders });
@@ -187,7 +204,7 @@ export async function onRequest(context) {
       if (teamCount !== undefined) state.teamCount = Number(teamCount);
 
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 6. POST /api/admin/random-split
@@ -218,7 +235,7 @@ export async function onRequest(context) {
       state.status = 'BALANCED';
 
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 7. POST /api/admin/reset-teams
@@ -231,7 +248,7 @@ export async function onRequest(context) {
       state.status = 'OPEN';
 
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 8. POST /api/admin/update-player-team
@@ -249,7 +266,7 @@ export async function onRequest(context) {
 
       player.team = Number(team);
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 9. POST /api/admin/swap-players
@@ -271,7 +288,7 @@ export async function onRequest(context) {
       p2.team = tempTeam;
 
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 10. POST /api/admin/edit-player
@@ -292,7 +309,7 @@ export async function onRequest(context) {
       }
 
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 11. POST /api/admin/delete-player
@@ -306,7 +323,7 @@ export async function onRequest(context) {
       state.players = state.players.filter(p => p.id !== playerId);
 
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 12. POST /api/admin/add-player
@@ -344,7 +361,7 @@ export async function onRequest(context) {
       state.status = 'OPEN';
 
       await putState(env, state);
-      return new Response(JSON.stringify({ success: true, data: getPublicState(state) }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 14. POST /api/admin/change-password
