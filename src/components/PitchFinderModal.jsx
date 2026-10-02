@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   RotateCcw
 } from 'lucide-react';
-import { DANANG_PITCHES } from '../data/daNangPitches';
+import { DANANG_PITCHES, getGoogleMapsSearchUrl } from '../data/daNangPitches';
 
 export default function PitchFinderModal({ 
   match, 
@@ -37,26 +37,23 @@ export default function PitchFinderModal({
     )
   );
 
-  // Quick filter categories for full search
+  // Quick filter categories for full search by district
   const filterCategories = [
     { id: 'ALL', label: 'Tất cả' },
-    { id: 'TDTT', label: 'Gần ĐH TDTT' },
     { id: 'TK', label: 'Q. Thanh Khê' },
-    { id: 'LC', label: 'Q. Liên Chiểu' }
+    { id: 'HC', label: 'Q. Hải Châu' },
+    { id: 'LC', label: 'Q. Liên Chiểu' },
+    { id: 'CL', label: 'Q. Cẩm Lệ' },
+    { id: 'ST_NHS', label: 'Sơn Trà / Ngũ Hành Sơn' }
   ];
 
   // Filter Pitches by Search & Category Tag
   const filteredPitches = DANANG_PITCHES.filter((pitch) => {
-    if (selectedTag === 'TDTT') {
-      const isTdtt = pitch.id === 'upes-pitch' || 
-        pitch.name.toLowerCase().includes('tdtt') || 
-        pitch.address.toLowerCase().includes('dũng sĩ thanh khê');
-      if (!isTdtt) return false;
-    } else if (selectedTag === 'TK') {
-      if (!pitch.address.toLowerCase().includes('thanh khê')) return false;
-    } else if (selectedTag === 'LC') {
-      if (!pitch.address.toLowerCase().includes('liên chiểu')) return false;
-    }
+    if (selectedTag === 'TK' && pitch.district !== 'Thanh Khê') return false;
+    if (selectedTag === 'HC' && pitch.district !== 'Hải Châu') return false;
+    if (selectedTag === 'LC' && pitch.district !== 'Liên Chiểu') return false;
+    if (selectedTag === 'CL' && pitch.district !== 'Cẩm Lệ') return false;
+    if (selectedTag === 'ST_NHS' && pitch.district !== 'Sơn Trà' && pitch.district !== 'Ngũ Hành Sơn') return false;
 
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
@@ -64,6 +61,7 @@ export default function PitchFinderModal({
       pitch.name.toLowerCase().includes(query) || 
       pitch.shortName.toLowerCase().includes(query) || 
       pitch.address.toLowerCase().includes(query) ||
+      (pitch.district && pitch.district.toLowerCase().includes(query)) ||
       pitch.phone.includes(query)
     );
   });
@@ -362,31 +360,37 @@ export default function PitchFinderModal({
               ) : null}
 
               {/* Chỉ đường Google Maps */}
-              {selectedPitchObj?.googleMapsUrl && (
-                <a
-                  href={selectedPitchObj.googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-secondary"
-                  style={{
-                    padding: '8px 12px',
-                    fontSize: '0.78rem',
-                    color: '#38BDF8',
-                    borderColor: 'rgba(56, 189, 248, 0.3)',
-                    background: 'rgba(56, 189, 248, 0.08)',
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    borderRadius: '8px'
-                  }}
-                  title="Xem chỉ đường trên Google Maps"
-                >
-                  <ExternalLink size={13} />
-                  <span>Mở Bản Đồ Chỉ Đường (Google Maps)</span>
-                </a>
-              )}
+              {(() => {
+                const mapsUrl = selectedPitchObj?.googleMapsUrl || getGoogleMapsSearchUrl(`Sân bóng đá ${match?.stadium || ''} ${match?.location || 'Đà Nẵng'}`);
+                return (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '9px 14px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      color: '#38BDF8',
+                      borderColor: 'rgba(56, 189, 248, 0.35)',
+                      background: 'rgba(56, 189, 248, 0.1)',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '7px',
+                      borderRadius: '8px',
+                      width: '100%'
+                    }}
+                    title="Mở chỉ đường trên Google Maps"
+                  >
+                    <Navigation size={14} color="#38BDF8" />
+                    <span>Mở Chỉ Đường Google Maps</span>
+                    <ExternalLink size={13} style={{ marginLeft: 'auto' }} />
+                  </a>
+                );
+              })()}
             </div>
 
             {/* Nút chuyển đổi: Đổi sang sân khác / Xem các sân khác */}
@@ -496,6 +500,36 @@ export default function PitchFinderModal({
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Direct Google Maps Live Search Link */}
+            <div style={{ paddingTop: '6px' }}>
+              <a
+                href={getGoogleMapsSearchUrl(searchQuery ? `sân bóng đá ${searchQuery} Đà Nẵng` : 'sân bóng đá Đà Nẵng')}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, rgba(66, 133, 244, 0.18), rgba(52, 168, 83, 0.18))',
+                  border: '1px solid rgba(66, 133, 244, 0.4)',
+                  color: '#93C5FD',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Mở Google Maps tìm kiếm tất cả sân bóng tại Đà Nẵng"
+              >
+                <Navigation size={14} color="#60A5FA" style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Tìm trên Google Maps: <strong style={{ color: '#F8FAFC' }}>{searchQuery ? `"${searchQuery}"` : 'Sân bóng đá Đà Nẵng'}</strong>
+                </span>
+                <ExternalLink size={13} color="#93C5FD" style={{ flexShrink: 0 }} />
+              </a>
             </div>
 
             {/* Quick Filter Badges */}

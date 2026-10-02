@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, Users, Edit2 } from 'lucide-react';
+import { Clock, MapPin, Users, Edit2, Navigation } from 'lucide-react';
 import { formatDateDMY } from '../utils/zaloFormatter';
 
 export default function MatchInfoCard({ match, isAdmin, onEditClick, onOpenPitchFinder }) {
@@ -77,6 +77,28 @@ export default function MatchInfoCard({ match, isAdmin, onEditClick, onOpenPitch
           <MapPin size={13} color="#38BDF8" />
           <span>{stadium ? `${stadium}` : 'Tìm sân bóng'}</span>
         </button>
+
+        {stadium && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Sân bóng đá ' + stadium + ' ' + (location || 'Đà Nẵng'))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="info-chip"
+            style={{
+              color: '#38BDF8',
+              borderColor: 'rgba(56, 189, 248, 0.35)',
+              background: 'rgba(56, 189, 248, 0.08)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            title="Mở chỉ đường Google Maps"
+          >
+            <Navigation size={12} color="#38BDF8" />
+            <span>Bản đồ</span>
+          </a>
+        )}
 
         <span className="info-chip" style={{ color: currentCount >= targetMax ? '#FF6B81' : 'var(--text-main)' }}>
           <Users size={13} color="var(--emerald)" />
