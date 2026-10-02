@@ -13,8 +13,25 @@ import PitchFinderModal from './components/PitchFinderModal';
 import { Shirt, ListChecks, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
 
 export default function App() {
-  const [match, setMatch] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [match, setMatch] = useState(() => {
+    try {
+      const cached = localStorage.getItem('dsu_cached_match');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return {
+      title: "Giao hữu giữa Thể Thao - Thanh Khê",
+      stadium: "Sân ĐH TDTT Đà Nẵng",
+      location: "44 Dũng Sĩ Thanh Khê, P. Thanh Khê Đông, Q. Thanh Khê, Đà Nẵng",
+      matchDate: "2026-10-03",
+      matchTime: "20:00 - 21:00",
+      maxPlayers: 14,
+      teamCount: 2,
+      status: "OPEN",
+      players: [],
+      hasPasswordSet: true
+    };
+  });
+  const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   
   // Music state: ON by default!
@@ -101,10 +118,16 @@ export default function App() {
   const fetchMatch = async (silent = false) => {
     try {
       const res = await fetch('/api/match');
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (!silent) setLoading(false);
+        return;
+      }
       const data = await res.json();
       if (data.success && data.data) {
         setMatch(data.data);
+        try {
+          localStorage.setItem('dsu_cached_match', JSON.stringify(data.data));
+        } catch {}
       }
     } catch (err) {
       if (!silent) {
