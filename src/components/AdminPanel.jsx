@@ -1,30 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Settings, 
-  Shuffle, 
   Calendar, 
-  UserPlus, 
   Lock, 
   Trash2, 
   Check, 
   X, 
-  RefreshCw, 
-  AlertTriangle 
+  AlertTriangle,
+  MapPin,
+  Phone,
+  ExternalLink
 } from 'lucide-react';
+import { DANANG_PITCHES } from '../data/daNangPitches';
 
 export default function AdminPanel({ 
   isOpen, 
   onClose, 
   match, 
   onUpdateMatch, 
-  onRandomSplit, 
-  onResetTeams, 
-  onAddPlayer, 
   onClearPlayers,
   onChangePassword,
+  onOpenPitchFinder,
   showToast 
 }) {
-  const [activeTab, setActiveTab] = useState('split'); // 'split' | 'setup' | 'add' | 'security'
+  const [activeTab, setActiveTab] = useState('setup'); // 'setup' | 'security'
 
   // Match setup form state
   const [title, setTitle] = useState(match.title || '');
@@ -35,15 +34,43 @@ export default function AdminPanel({
   const [maxPlayers, setMaxPlayers] = useState(match.maxPlayers || 14);
   const [status, setStatus] = useState(match.status || 'OPEN');
 
-  // Random split option
-  const [teamCount, setTeamCount] = useState(match.teamCount || 2);
-
-  // Manual player add state
-  const [manualName, setManualName] = useState('');
-  const [manualTeam, setManualTeam] = useState(0);
-
   // Security
   const [newPassword, setNewPassword] = useState('');
+
+  // Keep state synchronized with incoming match changes
+  useEffect(() => {
+    setTitle(match.title || '');
+    setStadium(match.stadium || '');
+    setLocation(match.location || '');
+    setMatchDate(match.matchDate || '');
+    setMatchTime(match.matchTime || '');
+    setMaxPlayers(match.maxPlayers || 14);
+    setStatus(match.status || 'OPEN');
+  }, [match]);
+
+  // Find matched pitch in Da Nang database
+  const matchedPitch = DANANG_PITCHES.find(p => 
+    stadium && (
+      p.shortName.toLowerCase() === stadium.toLowerCase() || 
+      p.name.toLowerCase().includes(stadium.toLowerCase()) || 
+      stadium.toLowerCase().includes(p.shortName.toLowerCase())
+    )
+  );
+
+  const handleQuickSelectPitch = (pitchId) => {
+    if (!pitchId) {
+      setStadium('');
+      setLocation('');
+      showToast?.('↩️ Đã xóa sân bóng (để trống).');
+      return;
+    }
+    const pitch = DANANG_PITCHES.find(p => p.id === pitchId);
+    if (pitch) {
+      setStadium(pitch.shortName);
+      setLocation(pitch.address);
+      showToast?.(`🏟️ Đã chọn ${pitch.shortName}`);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -58,40 +85,11 @@ export default function AdminPanel({
         matchTime,
         maxPlayers,
         status,
-        teamCount
+        teamCount: match.teamCount || 2
       });
       showToast('✅ Đã cập nhật thông tin kèo đá bóng!');
     } catch {
       showToast('Lỗi khi lưu thông tin kèo.');
-    }
-  };
-
-  const handleRandomSplitClick = async () => {
-    if (match.players.length < 2) {
-      showToast('Cần ít nhất 2 cầu thủ để chia đội!');
-      return;
-    }
-    try {
-      await onRandomSplit(teamCount);
-      showToast(`🎲 Đã chia ngẫu nhiên thành ${teamCount} đội!`);
-      onClose(); // Close panel to view the divided teams
-    } catch {
-      showToast('Lỗi khi chia đội.');
-    }
-  };
-
-  const handleAddManualPlayer = async (e) => {
-    e.preventDefault();
-    if (!manualName.trim()) {
-      showToast('Vui lòng nhập tên cầu thủ!');
-      return;
-    }
-    try {
-      await onAddPlayer(manualName.trim(), manualTeam);
-      setManualName('');
-      showToast(`Đã thêm cầu thủ: ${manualName}!`);
-    } catch {
-      showToast('Lỗi khi thêm cầu thủ.');
     }
   };
 
@@ -123,9 +121,12 @@ export default function AdminPanel({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" style={{ maxWidth: '580px' }} onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content admin-panel-modal" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
+        {/* Mobile Drag Pill */}
+        <div className="modal-drag-pill"></div>
+
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '36px',
@@ -140,177 +141,42 @@ export default function AdminPanel({
               <Settings size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff' }}>Quản Trị Kèo Đá Banh</h3>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Admin Control Panel</p>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fff', margin: 0 }}>Quản Trị Kèo Đá Banh</h3>
+              <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: 0 }}>Admin Control Panel</p>
             </div>
           </div>
-          <button onClick={onClose} className="btn-secondary" style={{ padding: '6px', borderRadius: '50%' }}>
-            <X size={16} />
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="btn-secondary" 
+            style={{ padding: '6px', borderRadius: '50%', color: 'var(--text-muted)' }}
+          >
+            <X size={17} />
           </button>
         </div>
 
-        {/* Tab navigation */}
-        <div style={{
-          display: 'flex',
-          gap: '6px',
-          background: 'rgba(255, 255, 255, 0.04)',
-          padding: '4px',
-          borderRadius: 'var(--radius-md)',
-          marginBottom: '18px',
-          overflowX: 'auto'
-        }}>
+        {/* 2-Column Responsive Tab Navigation */}
+        <div className="admin-tabs-grid">
           <button
-            onClick={() => setActiveTab('split')}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: activeTab === 'split' ? 'var(--emerald-primary)' : 'transparent',
-              color: activeTab === 'split' ? '#05160E' : 'var(--text-muted)',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            🎲 Chia Đội
-          </button>
-          <button
+            type="button"
             onClick={() => setActiveTab('setup')}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: activeTab === 'setup' ? 'var(--emerald-primary)' : 'transparent',
-              color: activeTab === 'setup' ? '#05160E' : 'var(--text-muted)',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
+            className={`admin-tab-btn ${activeTab === 'setup' ? 'active' : ''}`}
           >
-            ⏱️ Setup Giờ Đá
+            <Calendar size={16} />
+            <span>Lịch Đá & Sân</span>
           </button>
+
           <button
-            onClick={() => setActiveTab('add')}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: activeTab === 'add' ? 'var(--emerald-primary)' : 'transparent',
-              color: activeTab === 'add' ? '#05160E' : 'var(--text-muted)',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            ➕ Thêm Cầu Thủ
-          </button>
-          <button
+            type="button"
             onClick={() => setActiveTab('security')}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: activeTab === 'security' ? 'var(--emerald-primary)' : 'transparent',
-              color: activeTab === 'security' ? '#05160E' : 'var(--text-muted)',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
+            className={`admin-tab-btn ${activeTab === 'security' ? 'active' : ''}`}
           >
-            ⚙️ Cài Đặt
+            <Settings size={16} />
+            <span>Cài Đặt Hệ Thống</span>
           </button>
         </div>
 
-        {/* TAB 1: RANDOM SPLIT */}
-        {activeTab === 'split' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              borderRadius: 'var(--radius-md)',
-              padding: '16px'
-            }}>
-              <label style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff', display: 'block', marginBottom: '10px' }}>
-                Chọn số lượng đội muốn chia:
-              </label>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setTeamCount(2)}
-                  style={{
-                    padding: '12px',
-                    borderRadius: 'var(--radius-md)',
-                    border: teamCount === 2 ? '2px solid var(--emerald-primary)' : '1px solid rgba(255, 255, 255, 0.1)',
-                    background: teamCount === 2 ? 'rgba(0, 242, 152, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-                    color: '#fff',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ fontSize: '1.1rem' }}>🔴 vs 🔵</div>
-                  <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Chia 2 Đội</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>(Đỏ vs Xanh)</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTeamCount(3)}
-                  style={{
-                    padding: '12px',
-                    borderRadius: 'var(--radius-md)',
-                    border: teamCount === 3 ? '2px solid var(--emerald-primary)' : '1px solid rgba(255, 255, 255, 0.1)',
-                    background: teamCount === 3 ? 'rgba(0, 242, 152, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-                    color: '#fff',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ fontSize: '1.1rem' }}>🔴 vs 🔵 vs 🟡</div>
-                  <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>Chia 3 Đội</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>(Xoay vòng 3 đội)</div>
-                </button>
-              </div>
-
-              <div style={{ marginTop: '14px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                👥 Hiện có <strong>{match.players.length}</strong> cầu thủ đã điểm danh.
-                {match.players.length > 0 && (
-                  <span> Trung bình mỗi đội sẽ có <strong>{Math.floor(match.players.length / teamCount)} - {Math.ceil(match.players.length / teamCount)}</strong> người.</span>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={handleRandomSplitClick}
-              className="btn-primary"
-              style={{ padding: '14px', fontSize: '1.05rem', width: '100%' }}
-            >
-              <Shuffle size={18} />
-              🎲 BỐC THĂM CHIA ĐỘI NGẪU NHIÊN
-            </button>
-
-            {match.status === 'BALANCED' && (
-              <button
-                onClick={onResetTeams}
-                className="btn-secondary"
-                style={{ padding: '12px', width: '100%', color: '#F87171' }}
-              >
-                <RefreshCw size={16} />
-                Hủy Phân Đội (Quay Lại Danh Sách Điểm Danh)
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* TAB 2: SETUP MATCH */}
+        {/* TAB 1: SETUP MATCH */}
         {activeTab === 'setup' && (
           <form onSubmit={handleSaveSetup} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
@@ -356,6 +222,120 @@ export default function AdminPanel({
               </div>
             </div>
 
+            {/* Quick Pitch Selector from Da Nang Database */}
+            <div style={{
+              background: 'rgba(56, 189, 248, 0.08)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              borderRadius: '8px',
+              padding: '10px 12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#38BDF8', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <MapPin size={14} />
+                    <span>Chọn nhanh sân bóng Đà Nẵng:</span>
+                  </label>
+                  {stadium && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStadium('');
+                        setLocation('');
+                        showToast?.('↩️ Đã bỏ chọn sân bóng (để trống).');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#FF6B81',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        padding: '0',
+                        fontWeight: 600,
+                        textDecoration: 'underline'
+                      }}
+                      title="Bấm để xóa sân bóng, để trống"
+                    >
+                      ✕ Bỏ chọn sân
+                    </button>
+                  )}
+                </div>
+
+                {onOpenPitchFinder && (
+                  <button
+                    type="button"
+                    onClick={onOpenPitchFinder}
+                    className="btn btn-secondary"
+                    style={{ padding: '3px 8px', fontSize: '0.72rem', color: 'var(--emerald)', borderColor: 'rgba(0, 242, 152, 0.4)' }}
+                  >
+                    Xem Chi Tiết Sân →
+                  </button>
+                )}
+              </div>
+
+              <select
+                className="clean-input"
+                style={{ fontSize: '0.82rem', padding: '8px 10px', background: '#0F1A28' }}
+                value={matchedPitch ? matchedPitch.id : ''}
+                onChange={(e) => handleQuickSelectPitch(e.target.value)}
+              >
+                <option value="">-- Để trống sân bóng / Chưa chốt sân --</option>
+                {DANANG_PITCHES.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} (Hotline: {p.phone})
+                  </option>
+                ))}
+              </select>
+
+              {matchedPitch && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '6px',
+                  fontSize: '0.74rem',
+                  color: '#CBD5E1',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  padding: '6px 10px',
+                  borderRadius: '6px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Phone size={12} color="var(--emerald)" />
+                    <span>Hotline: <strong style={{ color: '#fff' }}>{matchedPitch.phone}</strong></span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <a
+                      href={`tel:${matchedPitch.phone.replace(/\s+/g, '')}`}
+                      className="btn"
+                      style={{
+                        padding: '2px 8px',
+                        fontSize: '0.7rem',
+                        background: 'var(--emerald)',
+                        color: '#03140C',
+                        fontWeight: 700,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Gọi Sân
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(matchedPitch.phone.replace(/\s+/g, ''));
+                        showToast(`📞 Đã chép số điện thoại ${matchedPitch.phone}`);
+                      }}
+                      className="btn btn-secondary"
+                      style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                    >
+                      Chép SĐT
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
@@ -366,7 +346,7 @@ export default function AdminPanel({
                   className="clean-input" 
                   value={stadium} 
                   onChange={(e) => setStadium(e.target.value)} 
-                  placeholder="Sân Phúc Đạt" 
+                  placeholder="Để trống nếu chưa chốt sân" 
                 />
               </div>
 
@@ -393,7 +373,7 @@ export default function AdminPanel({
                 className="clean-input" 
                 value={location} 
                 onChange={(e) => setLocation(e.target.value)} 
-                placeholder="324 Chu Văn An, Bình Thạnh" 
+                placeholder="Để trống nếu chưa có địa chỉ" 
               />
             </div>
 
@@ -418,50 +398,7 @@ export default function AdminPanel({
           </form>
         )}
 
-        {/* TAB 3: ADD PLAYER MANUALLY */}
-        {activeTab === 'add' && (
-          <form onSubmit={handleAddManualPlayer} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Nhập tên hộ cho các anh em không dùng smartphone hoặc đăng ký trực tiếp qua điện thoại.
-            </p>
-
-            <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                Tên cầu thủ:
-              </label>
-              <input 
-                type="text" 
-                className="clean-input" 
-                placeholder="Nhập tên..." 
-                value={manualName} 
-                onChange={(e) => setManualName(e.target.value)} 
-                required 
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                Gán sẵn vào đội (nếu đã chia):
-              </label>
-              <select 
-                className="clean-input"
-                value={manualTeam}
-                onChange={(e) => setManualTeam(Number(e.target.value))}
-              >
-                <option value={0}>Chưa gán đội (Chờ bốc thăm)</option>
-                <option value={1}>🔴 Đội 1 (Áo Đỏ)</option>
-                <option value={2}>🔵 Đội 2 (Áo Xanh)</option>
-                <option value={3}>🟡 Đội 3 (Áo Vàng)</option>
-              </select>
-            </div>
-
-            <button type="submit" className="btn-primary" style={{ padding: '12px' }}>
-              <UserPlus size={18} /> Thêm Cầu Thủ Này
-            </button>
-          </form>
-        )}
-
-        {/* TAB 4: SECURITY & RESET */}
+        {/* TAB 2: SECURITY & RESET */}
         {activeTab === 'security' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Change Password */}

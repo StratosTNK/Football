@@ -19,9 +19,9 @@ const getDefaultMatchState = () => {
   const dateStr = tomorrow.toISOString().split('T')[0];
 
   return {
-    title: "Kèo Đá Bóng Sân 7 - Giao Hữu Phủi",
-    stadium: "Sân Bóng Phúc Đạt (Sân 7)",
-    location: "324 Chu Văn An, P. 12, Q. Bình Thạnh, TP.HCM",
+    title: "Giao hữu giữa Thể Thao - Thanh Khê",
+    stadium: "Sân ĐH TDTT Đà Nẵng",
+    location: "44 Dũng Sĩ Thanh Khê, P. Thanh Khê Đông, Q. Thanh Khê, Đà Nẵng",
     matchDate: dateStr,
     matchTime: "19:30 - 21:00",
     maxPlayers: 14,

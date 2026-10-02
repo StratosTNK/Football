@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, Edit2 } from 'lucide-react';
+import { Clock, MapPin, Users, Edit2 } from 'lucide-react';
+import { formatDateDMY } from '../utils/zaloFormatter';
 
-export default function MatchInfoCard({ match, isAdmin, onEditClick }) {
+export default function MatchInfoCard({ match, isAdmin, onEditClick, onOpenPitchFinder }) {
   const { title, stadium, location, matchDate, matchTime, maxPlayers, players } = match;
   const currentCount = players ? players.length : 0;
   const targetMax = maxPlayers > 0 ? maxPlayers : 14;
@@ -54,13 +55,28 @@ export default function MatchInfoCard({ match, isAdmin, onEditClick }) {
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
         <span className="info-chip">
           <Clock size={13} color="var(--emerald)" />
-          <strong>{matchTime || '19:30 - 21:00'}</strong> ({matchDate})
+          <strong>{matchTime || '19:30 - 21:00'}</strong> ({formatDateDMY(matchDate) || matchDate})
         </span>
 
-        <span className="info-chip">
-          <MapPin size={13} color="#60A5FA" />
-          <span>{stadium || 'Sân bóng'}</span>
-        </span>
+        {/* Interactive Stadium Chip */}
+        <button
+          type="button"
+          onClick={onOpenPitchFinder}
+          className="info-chip"
+          style={{
+            cursor: 'pointer',
+            background: 'rgba(56, 189, 248, 0.12)',
+            borderColor: 'rgba(56, 189, 248, 0.35)',
+            color: '#38BDF8',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px'
+          }}
+          title="Bấm để xem danh sách sân bóng & số điện thoại đặt sân"
+        >
+          <MapPin size={13} color="#38BDF8" />
+          <span>{stadium ? `${stadium}` : 'Tìm sân bóng'}</span>
+        </button>
 
         <span className="info-chip" style={{ color: currentCount >= targetMax ? '#FF6B81' : 'var(--text-main)' }}>
           <Users size={13} color="var(--emerald)" />

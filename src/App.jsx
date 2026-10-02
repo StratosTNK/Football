@@ -9,7 +9,8 @@ import TeamDivider from './components/TeamDivider';
 import AdminLoginModal from './components/AdminLoginModal';
 import AdminPanel from './components/AdminPanel';
 import ChampionsLeagueAudioPlayer from './components/ChampionsLeagueAudioPlayer';
-import { Shirt, ListChecks } from 'lucide-react';
+import PitchFinderModal from './components/PitchFinderModal';
+import { Shirt, ListChecks, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
 
 export default function App() {
   const [match, setMatch] = useState(null);
@@ -67,6 +68,13 @@ export default function App() {
 
   // Active view toggle when balanced (Teams vs Attendance List)
   const [viewTab, setViewTab] = useState('teams'); // 'teams' | 'list'
+  const [showSplitModal, setShowSplitModal] = useState(false);
+  const [showPitchFinder, setShowPitchFinder] = useState(false);
+  const [splitCardOpen, setSplitCardOpen] = useState(false);
+
+  const handleToggleSplit = () => {
+    setShowSplitModal(true);
+  };
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -320,6 +328,8 @@ export default function App() {
         onOpenLogin={() => setShowLoginModal(true)}
         onLogout={handleAdminLogout}
         onOpenAdminPanel={() => setShowAdminPanel(true)}
+        onToggleSplit={handleToggleSplit}
+        onOpenPitchFinder={() => setShowPitchFinder(true)}
         showToast={showToast}
       />
 
@@ -328,6 +338,7 @@ export default function App() {
         match={match}
         isAdmin={isAdmin}
         onEditClick={() => setShowAdminPanel(true)}
+        onOpenPitchFinder={() => setShowPitchFinder(true)}
       />
 
         {/* If match is already balanced, show tabs: Kết Quả Đội vs Danh Sách */}
@@ -341,16 +352,16 @@ export default function App() {
               <button
                 onClick={() => setViewTab('teams')}
                 className={viewTab === 'teams' ? 'btn-primary' : 'btn-secondary'}
-                style={{ flex: 1, padding: '10px', fontSize: '0.95rem' }}
+                style={{ flex: 1, padding: '10px 6px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
               >
-                <Shirt size={18} /> Đội Hình Thi Đấu
+                <Shirt size={16} /> Đội Hình ({match.teamCount || 2} Đội)
               </button>
               <button
                 onClick={() => setViewTab('list')}
                 className={viewTab === 'list' ? 'btn-primary' : 'btn-secondary'}
-                style={{ flex: 1, padding: '10px', fontSize: '0.95rem' }}
+                style={{ flex: 1, padding: '10px 6px', fontSize: '0.88rem', whiteSpace: 'nowrap' }}
               >
-                <ListChecks size={18} /> Danh Sách Điểm Danh ({match.players.length})
+                <ListChecks size={16} /> Điểm Danh ({match.players.length})
               </button>
             </div>
 
@@ -379,6 +390,8 @@ export default function App() {
                   onLeavePlayer={handleLeave}
                   onRandomSplit={handleRandomSplit}
                   showToast={showToast}
+                  externalSplitOpen={splitCardOpen}
+                  setExternalSplitOpen={setSplitCardOpen}
                 />
               </div>
             )}
@@ -401,6 +414,8 @@ export default function App() {
               onLeavePlayer={handleLeave}
               onRandomSplit={handleRandomSplit}
               showToast={showToast}
+              externalSplitOpen={splitCardOpen}
+              setExternalSplitOpen={setSplitCardOpen}
             />
           </div>
         )}
@@ -413,18 +428,189 @@ export default function App() {
           showToast={showToast}
         />
 
+        {/* Quick Split Modal triggered from Header Chia Đội button */}
+        {showSplitModal && (
+          <div className="modal-overlay" onClick={() => setShowSplitModal(false)}>
+            <div 
+              className="modal-content" 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ maxWidth: '360px', textAlign: 'center' }}
+            >
+              <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '50%',
+                background: 'rgba(0, 242, 152, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px auto',
+                color: 'var(--emerald)'
+              }}>
+                <Shuffle size={22} />
+              </div>
+
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', marginBottom: '6px' }}>
+                Bốc Thăm Chia Đội
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                {match.players?.length >= 2 ? (
+                  <span>Danh sách hiện có <strong>{match.players.length}</strong> cầu thủ</span>
+                ) : (
+                  <span style={{ color: '#FFA502' }}>Cần ít nhất 2 cầu thủ để chia đội</span>
+                )}
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {/* Option 1: 2 Đội */}
+                <button
+                  type="button"
+                  disabled={match.players?.length < 2}
+                  onClick={async () => {
+                    await handleRandomSplit(2);
+                    setViewTab('teams');
+                    setShowSplitModal(false);
+                    showToast('🎉 Đã phân đều 2 Đội (Đỏ vs Xanh)!');
+                  }}
+                  className="btn"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 71, 87, 0.25), rgba(30, 144, 255, 0.25))',
+                    border: '1px solid rgba(0, 242, 152, 0.4)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    padding: '11px',
+                    fontSize: '0.88rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: match.players?.length < 2 ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <span>🔴 vs 🔵</span>
+                  <span>Chia 2 Đội (Đỏ vs Xanh)</span>
+                </button>
+
+                {/* Option 2: 3 Đội */}
+                <button
+                  type="button"
+                  disabled={match.players?.length < 3}
+                  onClick={async () => {
+                    await handleRandomSplit(3);
+                    setViewTab('teams');
+                    setShowSplitModal(false);
+                    showToast('🎉 Đã phân đều 3 Đội (Xoay vòng)!');
+                  }}
+                  className="btn btn-secondary"
+                  style={{
+                    fontWeight: 700,
+                    padding: '11px',
+                    fontSize: '0.88rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: match.players?.length < 3 ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <span>🔴 vs 🔵 vs 🟡</span>
+                  <span>Chia 3 Đội (Xoay vòng)</span>
+                </button>
+
+                {/* If already balanced: Show Xáo lại & Hủy phân đội */}
+                {isBalanced && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleRandomSplit(match.teamCount || 2);
+                        setViewTab('teams');
+                        setShowSplitModal(false);
+                        showToast(`🔄 Đã xáo lại ngẫu nhiên ${match.teamCount || 2} Đội!`);
+                      }}
+                      className="btn btn-secondary"
+                      style={{
+                        color: 'var(--emerald)',
+                        fontWeight: 700,
+                        padding: '10px',
+                        fontSize: '0.84rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <RefreshCw size={14} />
+                      <span>Xáo lại ngẫu nhiên ({match.teamCount || 2} Đội)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleResetTeams();
+                        setViewTab('list');
+                        setShowSplitModal(false);
+                        showToast('↩️ Đã hủy phân đội, trở về điểm danh.');
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#FF6B81',
+                        fontWeight: 600,
+                        padding: '8px',
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Undo2 size={13} />
+                      <span>Hủy phân đội (Về điểm danh)</span>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowSplitModal(false)}
+                className="btn btn-secondary"
+                style={{ width: '100%', marginTop: '12px', padding: '9px', fontSize: '0.84rem' }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
+
         <AdminPanel 
           isOpen={showAdminPanel}
           onClose={() => setShowAdminPanel(false)}
           match={match}
           onUpdateMatch={handleUpdateMatch}
-          onRandomSplit={handleRandomSplit}
-          onResetTeams={handleResetTeams}
-          onAddPlayer={handleAddPlayer}
           onClearPlayers={handleClearPlayers}
           onChangePassword={handleChangePassword}
+          onOpenPitchFinder={() => setShowPitchFinder(true)}
           showToast={showToast}
         />
+
+        {/* Modal Tìm Sân Bóng Đà Nẵng Gần ĐH TDTT */}
+        {showPitchFinder && (
+          <PitchFinderModal 
+            match={match}
+            isAdmin={isAdmin}
+            onSelectStadium={async (stadiumPayload) => {
+              if (isAdmin) {
+                await handleUpdateMatch(stadiumPayload);
+              }
+            }}
+            onClose={() => setShowPitchFinder(false)}
+            showToast={showToast}
+          />
+        )}
 
         {/* Background UEFA Champions League Music Player */}
         <ChampionsLeagueAudioPlayer 

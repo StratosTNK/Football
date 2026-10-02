@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, LogOut, Check, Music, Copy } from 'lucide-react';
+import { Shield, LogOut, Check, Music, Copy, Shuffle, MapPin } from 'lucide-react';
 import { formatMatchForZalo } from '../utils/zaloFormatter';
 
 export default function Header({ 
@@ -11,6 +11,8 @@ export default function Header({
   onOpenLogin, 
   onLogout, 
   onOpenAdminPanel,
+  onToggleSplit,
+  onOpenPitchFinder,
   showToast 
 }) {
   const [copiedZalo, setCopiedZalo] = useState(false);
@@ -28,94 +30,130 @@ export default function Header({
   };
 
   return (
-    <header style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '8px 0 12px 0',
-      marginBottom: '8px',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-      gap: '8px',
-      flexWrap: 'wrap'
-    }}>
-      {/* Brand & Status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '1.4rem' }}>⚽</span>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>
-              CHIA ĐỘI PHỦI
+    <header className="site-header">
+      {/* Brand & Status Row */}
+      <div className="header-brand-row">
+        <div className="header-logo-group">
+          <span className="header-ball-icon">⚽</span>
+          <span className="header-app-title">CHIA ĐỘI PHỦI</span>
+        </div>
+
+        <div className="header-status-badge">
+          {status === 'BALANCED' ? (
+            <span className="badge badge-balanced">Đã Chia</span>
+          ) : status === 'LOCKED' ? (
+            <span className="badge" style={{ background: 'rgba(239,68,68,0.2)', color: '#F87171' }}>Đã Khóa</span>
+          ) : (
+            <span className="badge badge-live">
+              <span className="pulse-dot"></span> Mở Điểm Danh
             </span>
-            {status === 'BALANCED' ? (
-              <span className="badge badge-balanced">Đã Chia</span>
-            ) : status === 'LOCKED' ? (
-              <span className="badge" style={{ background: 'rgba(239,68,68,0.2)', color: '#F87171' }}>Đã Khóa</span>
-            ) : (
-              <span className="badge badge-live">
-                <span className="pulse-dot"></span> Mở Điểm Danh
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        {/* Play/Mute C1 Music button */}
-        <button
-          onClick={onToggleMusic}
-          className="btn btn-secondary"
-          style={{ 
-            padding: '6px 10px', 
-            fontSize: '0.8rem',
-            borderColor: musicPlaying ? 'rgba(0,242,152,0.4)' : 'rgba(255,255,255,0.1)',
-            color: musicPlaying ? 'var(--emerald)' : 'var(--text-muted)',
-            background: musicPlaying ? 'rgba(0, 242, 152, 0.12)' : 'rgba(255, 255, 255, 0.05)'
-          }}
-          title={musicPlaying ? 'Bấm để tắt nhạc Cúp C1' : 'Bấm để bật lại nhạc Cúp C1'}
-        >
-          <Music size={14} />
-          <span>{musicPlaying ? '🔊 Nhạc C1: Bật' : '🔇 Nhạc C1: Tắt'}</span>
-        </button>
-
-        {/* Copy Zalo */}
-        <button 
-          onClick={handleCopyZalo}
-          className="btn btn-zalo"
-          style={{ padding: '6px 11px', fontSize: '0.8rem' }}
-          title="Copy nhanh danh sách gửi Zalo"
-        >
-          {copiedZalo ? <Check size={14} /> : <Copy size={14} />}
-          <span>{copiedZalo ? 'Đã Copy' : 'Copy Zalo'}</span>
-        </button>
-
-        {/* Admin Login/Control */}
+      {/* Action buttons Row (Mobile-Optimized Flex Bar) */}
+      <div className="header-actions-row">
         {isAdmin ? (
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button 
-              onClick={onOpenAdminPanel}
-              className="btn btn-secondary"
-              style={{ padding: '6px 10px', fontSize: '0.8rem', color: '#FFA502', borderColor: 'rgba(255,165,2,0.3)' }}
+          <>
+            {/* Primary Action Tier on Mobile */}
+            <div className="header-primary-actions">
+              <button 
+                type="button"
+                onClick={onToggleSplit}
+                className="btn btn-header btn-header-split btn-header-music-on"
+                title="Bốc thăm chia đội thi đấu"
+              >
+                <Shuffle size={13} />
+                <span>Chia Đội</span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={handleCopyZalo} 
+                className="btn btn-zalo btn-header"
+                title="Copy nhanh danh sách gửi Zalo (Quyền Admin)"
+              >
+                {copiedZalo ? <Check size={13} /> : <Copy size={13} />}
+                <span>{copiedZalo ? 'Đã Copy' : 'Zalo'}</span>
+              </button>
+            </div>
+
+            {/* Utility Toolbar Tier on Mobile */}
+            <div className="header-utility-actions">
+              <button
+                type="button"
+                onClick={onToggleMusic}
+                className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
+                title={musicPlaying ? 'Bấm để tắt nhạc Cúp C1' : 'Bấm để bật lại nhạc Cúp C1'}
+              >
+                <Music size={12} />
+                <span>{musicPlaying ? '♫ Bật' : '♫ Tắt'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenPitchFinder}
+                className="btn btn-header btn-header-pitch"
+                style={{ borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38BDF8' }}
+                title="Tìm sân bóng Đà Nẵng & số điện thoại đặt sân"
+              >
+                <MapPin size={12} />
+                <span>Sân Bóng</span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={onOpenAdminPanel} 
+                className="btn btn-header btn-header-admin"
+                title="Quản trị trận đấu"
+              >
+                <Shield size={12} />
+                <span>Admin</span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={onLogout}
+                className="btn btn-header btn-header-logout"
+                title="Đăng xuất Admin"
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="header-guest-actions">
+            <button
+              type="button"
+              onClick={onToggleMusic}
+              className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
+              title={musicPlaying ? 'Bấm để tắt nhạc Cúp C1' : 'Bấm để bật lại nhạc Cúp C1'}
             >
-              <Shield size={14} /> Quản Trị
+              <Music size={12} />
+              <span>{musicPlaying ? '♫ Bật' : '♫ Tắt'}</span>
             </button>
-            <button 
-              onClick={onLogout}
-              className="btn btn-secondary"
-              style={{ padding: '6px 8px', color: '#F87171' }}
-              title="Đăng xuất Admin"
+
+            <button
+              type="button"
+              onClick={onOpenPitchFinder}
+              className="btn btn-header btn-header-pitch"
+              style={{ borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38BDF8' }}
+              title="Tìm sân bóng Đà Nẵng & số điện thoại đặt sân"
             >
-              <LogOut size={14} />
+              <MapPin size={12} />
+              <span>Sân Bóng</span>
+            </button>
+
+            <button 
+              type="button"
+              onClick={onOpenLogin}
+              className="btn btn-secondary btn-header"
+              title="Đăng nhập Quản trị viên"
+            >
+              <Shield size={12} />
+              <span>Admin</span>
             </button>
           </div>
-        ) : (
-          <button 
-            onClick={onOpenLogin}
-            className="btn btn-secondary"
-            style={{ padding: '6px 10px', fontSize: '0.8rem' }}
-          >
-            <Shield size={14} /> Admin
-          </button>
         )}
       </div>
     </header>
