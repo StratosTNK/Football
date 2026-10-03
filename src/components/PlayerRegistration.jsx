@@ -143,101 +143,79 @@ export default function PlayerRegistration({
   ];
 
   return (
-    <div style={{ marginBottom: '16px' }}>
-      {/* Primary Trigger Button: THAM GIA */}
+    <div 
+      className="clean-card" 
+      style={{ 
+        marginBottom: '12px', 
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+        <div style={{
+          width: '36px',
+          height: '36px',
+          minWidth: '36px',
+          borderRadius: '10px',
+          background: isLocked ? 'rgba(255, 71, 87, 0.12)' : 'rgba(0, 242, 152, 0.12)',
+          border: isLocked ? '1px solid rgba(255, 71, 87, 0.25)' : '1px solid rgba(0, 242, 152, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.15rem'
+        }}>
+          {isLocked ? '🔒' : '⚽'}
+        </div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+          <h3 style={{ 
+            fontSize: '1rem', 
+            fontWeight: 800, 
+            color: '#FFFFFF',
+            margin: 0,
+            lineHeight: 1.2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            {isLocked ? 'Kèo Đã Khóa Đăng Ký' : 'Điểm Danh Trận Đấu'}
+          </h3>
+        </div>
+      </div>
+
       <button
         type="button"
         id="btn-open-join-modal"
         onClick={() => !isLocked && setIsOpen(true)}
         disabled={isLocked}
         style={{
-          width: '100%',
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          padding: '12px 14px',
-          borderRadius: '16px',
+          padding: '9px 18px',
+          borderRadius: '12px',
           background: isLocked 
-            ? 'rgba(255, 255, 255, 0.04)' 
+            ? 'rgba(255, 255, 255, 0.05)' 
             : 'linear-gradient(135deg, #00F298 0%, #00B96B 100%)',
-          color: isLocked ? '#FF6B81' : '#04160E',
+          color: isLocked ? '#94A3B8' : '#04160E',
           border: isLocked 
-            ? '1px dashed rgba(255, 107, 129, 0.35)' 
-            : '1px solid rgba(255, 255, 255, 0.25)',
+            ? '1px dashed rgba(255, 255, 255, 0.15)' 
+            : '1px solid rgba(255, 255, 255, 0.35)',
           boxShadow: isLocked 
             ? 'none' 
-            : '0 8px 24px -4px rgba(0, 242, 152, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.45)',
+            : '0 4px 16px rgba(0, 242, 152, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+          fontSize: '0.88rem',
+          fontWeight: 800,
           cursor: isLocked ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '10px',
-          whiteSpace: 'normal',
-          overflow: 'hidden',
-          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          gap: '6px',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-          <div style={{
-            width: '38px',
-            height: '38px',
-            minWidth: '38px',
-            flexShrink: 0,
-            borderRadius: '11px',
-            background: isLocked ? 'rgba(255, 71, 87, 0.12)' : 'rgba(0, 0, 0, 0.16)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.2rem',
-            boxShadow: isLocked ? 'none' : 'inset 0 1px 1px rgba(255,255,255,0.2)'
-          }}>
-            {isLocked ? '🔒' : '⚽'}
-          </div>
-
-          <div style={{ textAlign: 'left', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-            <div style={{ 
-              fontSize: '1rem', 
-              fontWeight: 800, 
-              letterSpacing: '0.02em', 
-              textTransform: 'uppercase',
-              lineHeight: 1.2,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}>
-              {isLocked ? 'KÈO ĐÃ KHÓA' : 'THAM GIA'}
-            </div>
-            <div style={{ 
-              fontSize: '0.72rem', 
-              opacity: isLocked ? 0.75 : 0.88, 
-              fontWeight: 500, 
-              marginTop: '2px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}>
-              {isLocked ? 'Đã chốt danh sách thi đấu' : 'Chọn vị trí & năng lực thi đấu'}
-            </div>
-          </div>
-        </div>
-
-        {!isLocked && (
-          <div style={{
-            flexShrink: 0,
-            background: 'rgba(0, 0, 0, 0.22)',
-            padding: '6px 12px',
-            borderRadius: '20px',
-            fontSize: '0.78rem',
-            fontWeight: 800,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.18)',
-            whiteSpace: 'nowrap'
-          }}>
-            <UserPlus size={14} />
-            <span>Đăng Ký</span>
-          </div>
-        )}
+        <UserPlus size={15} />
+        <span>{isLocked ? 'Đã Khóa' : 'Tham Gia'}</span>
       </button>
 
       {/* Registration Modal Popup */}
@@ -300,9 +278,6 @@ export default function PlayerRegistration({
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
                     Điểm Danh Tham Gia Kèo
                   </h3>
-                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>
-                    Chọn năng lực thực tế để thuật toán chia đội công bằng
-                  </div>
                 </div>
               </div>
 
@@ -594,17 +569,6 @@ export default function PlayerRegistration({
                   )}
                 </button>
               </div>
-
-              {!hasName && (
-                <div style={{ 
-                  textAlign: 'center', 
-                  fontSize: '0.7rem', 
-                  color: '#64748B',
-                  marginTop: '-4px'
-                }}>
-                  * Vui lòng điền họ tên bên trên để mở khóa nút xác nhận
-                </div>
-              )}
             </form>
           </div>
         </div>
