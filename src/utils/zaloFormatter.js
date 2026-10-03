@@ -65,14 +65,14 @@ export const formatTeamsForZalo = (match) => {
     if (!p) return '';
     let label = '';
     if (p.skills && typeof p.skills === 'object') {
-      const picks = Object.entries(p.skills).filter(([_, v]) => v && v !== 'Ổn');
+      const picks = Object.entries(p.skills).filter(([_, v]) => v && v !== 'B' && v !== 'Ổn');
       if (picks.length > 0) {
-        label = picks.map(([pos, rat]) => `${pos}-${rat}`).join('/');
+        label = picks.map(([pos, rat]) => `${pos}-${rat === 'Ổn' ? 'B' : rat}`).join('/');
       }
     }
     if (!label) {
       const pos = p.position || 'MF';
-      const rat = p.rating || 'Ổn';
+      const rat = p.rating ? (p.rating === 'Ổn' ? 'B' : p.rating) : 'B';
       label = `${pos}-${rat}`;
     }
     return `${idx + 1}. ${p.name} [${label}]`;

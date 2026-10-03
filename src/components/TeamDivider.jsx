@@ -244,9 +244,10 @@ export default function TeamDivider({
                     <span style={{ color: POSITIONS.FW.color }}>🎯 {stats.positions.FW}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ color: RATINGS.S.color, fontWeight: 700 }}>⭐{stats.ratings.S}</span>
-                    <span style={{ color: RATINGS.A.color, fontWeight: 700 }}>⚡{stats.ratings.A}</span>
-                    <span style={{ color: RATINGS.B.color, fontWeight: 700 }}>🟢{stats.ratings.B}</span>
+                    <span style={{ color: RATINGS.S.color, fontWeight: 700 }}>⭐{stats.ratings.S || 0}</span>
+                    <span style={{ color: RATINGS.A.color, fontWeight: 700 }}>⚡{stats.ratings.A || 0}</span>
+                    <span style={{ color: RATINGS.B.color, fontWeight: 700 }}>🟢{stats.ratings.B || 0}</span>
+                    {(stats.ratings.C > 0) && <span style={{ color: RATINGS.C.color, fontWeight: 700 }}>⚪{stats.ratings.C}</span>}
                   </div>
                 </div>
               )}

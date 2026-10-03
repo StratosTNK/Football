@@ -49,7 +49,7 @@ export const RATINGS = {
     score: 10,
     color: '#FFD700',
     star: '⭐',
-    badge: '⭐ Gánh team',
+    badge: '⭐ S',
     bg: 'rgba(255, 215, 0, 0.12)',
     border: 'rgba(255, 215, 0, 0.35)',
     desc: 'Tạo đột biến, gánh team toàn diện'
@@ -58,34 +58,46 @@ export const RATINGS = {
     id: 'A',
     name: 'Chắc chân',
     label: 'Đá cứng, chắc chân',
-    score: 6,
+    score: 7,
     color: '#A78BFA',
     star: '⚡',
-    badge: '⚡ Chắc chân',
+    badge: '⚡ A',
     bg: 'rgba(167, 139, 250, 0.12)',
     border: 'rgba(167, 139, 250, 0.35)',
     desc: 'Đá cứng, tự tin ở vị trí này'
   },
   B: {
     id: 'B',
+    name: 'Tròn vai',
+    label: 'Đá tròn vai, cơ bản',
+    score: 5,
+    color: '#00F298',
+    star: '🟢',
+    badge: '🟢 B',
+    bg: 'rgba(0, 242, 152, 0.12)',
+    border: 'rgba(0, 242, 152, 0.35)',
+    desc: 'Đá được, hoàn thành nhiệm vụ (mặc định)'
+  },
+  C: {
+    id: 'C',
     name: 'Dưỡng sinh',
     label: 'Dưỡng sinh, vui vẻ',
     score: 3,
     color: '#38BDF8',
-    star: '🟢',
-    badge: '🟢 Dưỡng sinh',
+    star: '⚪',
+    badge: '⚪ C',
     bg: 'rgba(56, 189, 248, 0.12)',
     border: 'rgba(56, 189, 248, 0.35)',
     desc: 'Đá vui vẻ, chạy nhiệt giao lưu'
   },
   'Ổn': {
-    id: 'Ổn',
+    id: 'B',
     name: 'Tròn vai',
     label: 'Đá tròn vai',
     score: 5,
     color: '#00F298',
-    star: '⚪',
-    badge: '⚪ Tròn vai',
+    star: '🟢',
+    badge: '🟢 B',
     bg: 'rgba(0, 242, 152, 0.12)',
     border: 'rgba(0, 242, 152, 0.35)',
     desc: 'Đá được, hoàn thành nhiệm vụ'
@@ -94,8 +106,9 @@ export const RATINGS = {
 
 export const RATING_SCORES = {
   S: 10,
-  A: 6,
-  B: 3,
+  A: 7,
+  B: 5,
+  C: 3,
   'Ổn': 5
 };
 
@@ -103,22 +116,22 @@ export const RATING_SCORES = {
  * Derive player's primary role and rating from their capability matrix
  */
 export function derivePlayerAttributes(skills = {}) {
-  const tierWeight = { 'S': 4, 'A': 3, 'B': 2, 'Ổn': 1 };
+  const tierWeight = { 'S': 4, 'A': 3, 'B': 2, 'C': 1, 'Ổn': 2 };
   
-  const picks = Object.entries(skills).filter(([_, val]) => val && val !== 'Ổn');
+  const picks = Object.entries(skills).filter(([_, val]) => val && val !== 'B' && val !== 'Ổn');
   
-  // Sort picks by tier weight descending (S > A > B)
-  picks.sort((a, b) => (tierWeight[b[1]] || 1) - (tierWeight[a[1]] || 1));
+  // Sort picks by tier weight descending (S > A > C)
+  picks.sort((a, b) => (tierWeight[b[1]] || 2) - (tierWeight[a[1]] || 2));
 
   let primaryPos = 'MF';
-  let primaryRating = 'Ổn';
+  let primaryRating = 'B';
 
   if (picks.length > 0) {
     primaryPos = picks[0][0]; // highest rated position
-    primaryRating = picks[0][1];
+    primaryRating = picks[0][1] === 'Ổn' ? 'B' : picks[0][1];
   }
 
-  const strongPositions = picks.map(p => `${p[0]}-${p[1]}`);
+  const strongPositions = picks.map(p => `${p[0]}-${p[1] === 'Ổn' ? 'B' : p[1]}`);
 
   return {
     primaryPosition: primaryPos,
@@ -135,7 +148,7 @@ export function calculateTeamStats(teamPlayers = []) {
   const stats = {
     count: teamPlayers.length,
     totalScore: 0,
-    ratings: { S: 0, A: 0, B: 0, 'Ổn': 0 },
+    ratings: { S: 0, A: 0, B: 0, C: 0 },
     positions: { GK: 0, DF: 0, MF: 0, FW: 0 }
   };
 
@@ -147,7 +160,7 @@ export function calculateTeamStats(teamPlayers = []) {
       if (!pos || pos === 'MF') pos = derived.primaryPosition;
       if (!r) r = derived.primaryRating;
     }
-    r = r && RATINGS[r] ? r : 'Ổn';
+    r = r && RATINGS[r] ? (r === 'Ổn' ? 'B' : r) : 'B';
     pos = pos && POSITIONS[pos] ? pos : 'MF';
 
     stats.totalScore += RATING_SCORES[r] || 5;
@@ -160,7 +173,7 @@ export function calculateTeamStats(teamPlayers = []) {
 
 /**
  * Intelligent Fair Team Division Algorithm
- * Balances both Player Skill Tier (S-A-B) and Playing Position (FW-MF-DF-GK)
+ * Balances both Player Skill Tier (S-A-B-C) and Playing Position (FW-MF-DF-GK)
  */
 export function balanceTeams(players, teamCount = 2) {
   if (!players || players.length < 2) return players || [];
@@ -178,7 +191,7 @@ export function balanceTeams(players, teamCount = 2) {
     return {
       ...p,
       position: (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) ? position : 'MF',
-      rating: (rating && ['S', 'A', 'B', 'Ổn'].includes(rating)) ? rating : 'Ổn'
+      rating: (rating && ['S', 'A', 'B', 'C', 'Ổn'].includes(rating)) ? (rating === 'Ổn' ? 'B' : rating) : 'B'
     };
   });
 

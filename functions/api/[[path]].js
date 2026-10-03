@@ -113,17 +113,17 @@ function verifyAdmin(request, state) {
   return token === state.adminPassword;
 }
 
-const RATING_SCORES = { S: 10, A: 6, B: 3, 'Ổn': 5 };
+const RATING_SCORES = { S: 10, A: 7, B: 5, C: 3, 'Ổn': 5 };
 
 function derivePlayerAttributes(skills = {}) {
-  const tierWeight = { 'S': 4, 'A': 3, 'B': 2, 'Ổn': 1 };
-  const picks = Object.entries(skills).filter(([_, val]) => val && val !== 'Ổn');
-  picks.sort((a, b) => (tierWeight[b[1]] || 1) - (tierWeight[a[1]] || 1));
+  const tierWeight = { 'S': 4, 'A': 3, 'B': 2, 'C': 1, 'Ổn': 2 };
+  const picks = Object.entries(skills).filter(([_, val]) => val && val !== 'B' && val !== 'Ổn');
+  picks.sort((a, b) => (tierWeight[b[1]] || 2) - (tierWeight[a[1]] || 2));
   let primaryPos = 'MF';
-  let primaryRating = 'Ổn';
+  let primaryRating = 'B';
   if (picks.length > 0) {
     primaryPos = picks[0][0];
-    primaryRating = picks[0][1];
+    primaryRating = picks[0][1] === 'Ổn' ? 'B' : picks[0][1];
   }
   return { primaryPosition: primaryPos, primaryRating };
 }
@@ -143,7 +143,7 @@ function balanceTeams(players, teamCount = 2) {
     return {
       ...p,
       position: (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) ? position : 'MF',
-      rating: (rating && ['S', 'A', 'B', 'Ổn'].includes(rating)) ? rating : 'Ổn'
+      rating: (rating && ['S', 'A', 'B', 'C', 'Ổn'].includes(rating)) ? (rating === 'Ổn' ? 'B' : rating) : 'B'
     };
   });
 
@@ -300,10 +300,10 @@ export async function onRequest(context) {
       }
 
       const validPositions = ['FW', 'MF', 'DF', 'GK'];
-      const validRatings = ['S', 'A', 'B', 'Ổn'];
+      const validRatings = ['S', 'A', 'B', 'C', 'Ổn'];
 
       const pos = validPositions.includes(position) ? position : 'MF';
-      const rat = validRatings.includes(rating) ? rating : 'Ổn';
+      const rat = validRatings.includes(rating) ? (rating === 'Ổn' ? 'B' : rating) : 'B';
 
       const newPlayer = {
         id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
@@ -311,7 +311,7 @@ export async function onRequest(context) {
         note: note ? note.trim() : '',
         position: pos,
         rating: rat,
-        skills: (skills && typeof skills === 'object') ? skills : { FW: 'Ổn', MF: 'Ổn', DF: 'Ổn', GK: 'Ổn' },
+        skills: (skills && typeof skills === 'object') ? skills : { FW: 'B', MF: 'B', DF: 'B', GK: 'B' },
         team: 0,
         createdAt: new Date().toISOString()
       };
@@ -473,8 +473,8 @@ export async function onRequest(context) {
       if (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) {
         player.position = position;
       }
-      if (rating && ['S', 'A', 'B', 'Ổn'].includes(rating)) {
-        player.rating = rating;
+      if (rating && ['S', 'A', 'B', 'C', 'Ổn'].includes(rating)) {
+        player.rating = rating === 'Ổn' ? 'B' : rating;
       }
 
       await putState(env, state);

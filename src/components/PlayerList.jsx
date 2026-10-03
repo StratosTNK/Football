@@ -55,7 +55,7 @@ export default function PlayerList({
     setEditingId(player.id);
     setEditName(player.name);
     setEditPosition(player.position || 'MF');
-    setEditRating(player.rating || 'A');
+    setEditRating(player.rating || 'B');
   };
 
   const cancelEdit = () => {
@@ -367,9 +367,10 @@ export default function PlayerList({
                           className="clean-input"
                           style={{ padding: '2px 6px', fontSize: '0.74rem' }}
                         >
-                          <option value="S">⭐ S - Đá hay, toàn diện</option>
-                          <option value="A">⚡ A - Biết đá, 1 sở trường</option>
-                          <option value="B">🟢 B - Biết nhưng chưa tốt</option>
+                          <option value="S">⭐ S - Gánh team</option>
+                          <option value="A">⚡ A - Chắc chân</option>
+                          <option value="B">🟢 B - Tròn vai (Mặc định)</option>
+                          <option value="C">⚪ C - Dưỡng sinh</option>
                         </select>
                       </div>
                     </div>
@@ -392,7 +393,7 @@ export default function PlayerList({
                           {/* Multi-position or single position badges */}
                           {(() => {
                             const strongPicks = player.skills && typeof player.skills === 'object'
-                              ? Object.entries(player.skills).filter(([_, v]) => v && v !== 'Ổn')
+                              ? Object.entries(player.skills).filter(([_, v]) => v && v !== 'B' && v !== 'Ổn')
                               : [];
 
                             if (strongPicks.length > 0) {

@@ -22,10 +22,10 @@ export default function PlayerRegistration({
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [skills, setSkills] = useState({
-    FW: 'Ổn',
-    MF: 'Ổn',
-    DF: 'Ổn',
-    GK: 'Ổn'
+    FW: 'B',
+    MF: 'B',
+    DF: 'B',
+    GK: 'B'
   });
   const [loading, setLoading] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -59,12 +59,12 @@ export default function PlayerRegistration({
         } catch {}
 
         setName('');
-        setSkills({ FW: 'Ổn', MF: 'Ổn', DF: 'Ổn', GK: 'Ổn' });
+        setSkills({ FW: 'B', MF: 'B', DF: 'B', GK: 'B' });
         setIsOpen(false);
 
         const summary = derived.strongPositions.length > 0 
           ? derived.strongPositions.join(', ') 
-          : 'Đa năng (Mức ổn)';
+          : 'Đa năng (Mức B)';
 
         showToast?.(`⚽ Đã thêm "${res.player.name}" [${summary}] vào trận đấu!`);
       }
@@ -129,16 +129,16 @@ export default function PlayerRegistration({
     { 
       id: 'B', 
       label: 'B', 
-      color: '#38BDF8', 
-      activeBg: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(37, 99, 235, 0.1))', 
-      border: '#38BDF8' 
-    },
-    { 
-      id: 'Ổn', 
-      label: 'Ổn', 
       color: '#00F298', 
       activeBg: 'linear-gradient(135deg, rgba(0, 242, 152, 0.22), rgba(5, 150, 105, 0.1))', 
       border: '#00F298' 
+    },
+    { 
+      id: 'C', 
+      label: 'C', 
+      color: '#38BDF8', 
+      activeBg: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(37, 99, 235, 0.1))', 
+      border: '#38BDF8' 
     }
   ];
 
@@ -390,7 +390,7 @@ export default function PlayerRegistration({
                     Thêm thông tin năng lực:
                   </label>
                   <span style={{ fontSize: '0.7rem', color: '#00F298', fontWeight: 600 }}>
-                    Mặc định: Ổn
+                    Mặc định: B
                   </span>
                 </div>
 
@@ -410,15 +410,15 @@ export default function PlayerRegistration({
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <span style={{ color: '#FFD700', fontWeight: 700 }}>⭐ S: Gánh team</span>
                     <span style={{ color: '#A78BFA', fontWeight: 700 }}>⚡ A: Chắc chân</span>
-                    <span style={{ color: '#38BDF8', fontWeight: 700 }}>🟢 B: Dưỡng sinh</span>
-                    <span style={{ color: '#00F298', fontWeight: 700 }}>⚪ Ổn: Tròn vai</span>
+                    <span style={{ color: '#00F298', fontWeight: 700 }}>🟢 B: Tròn vai</span>
+                    <span style={{ color: '#38BDF8', fontWeight: 700 }}>⚪ C: Dưỡng sinh</span>
                   </div>
                 </div>
 
                 {/* 4 Rows: FW, MF, DF, GK */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {Object.values(ROLE_CONFIGS).map((pos) => {
-                    const currentTier = skills[pos.id] || 'Ổn';
+                    const currentTier = skills[pos.id] || 'B';
 
                     return (
                       <div
@@ -428,7 +428,7 @@ export default function PlayerRegistration({
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           background: 'rgba(255, 255, 255, 0.025)',
-                          border: currentTier !== 'Ổn' 
+                          border: currentTier !== 'B' 
                             ? `1px solid ${pos.borderActive}55` 
                             : '1px solid rgba(255, 255, 255, 0.07)',
                           borderRadius: '12px',
