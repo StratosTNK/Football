@@ -408,10 +408,10 @@ export default function PlayerRegistration({
                 }}>
                   <span>Có thể chọn nhiều vị trí:</span>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ color: '#FFD700', fontWeight: 700 }}>⭐ S: Đá hay</span>
-                    <span style={{ color: '#A78BFA', fontWeight: 700 }}>⚡ A: Biết đá</span>
-                    <span style={{ color: '#38BDF8', fontWeight: 700 }}>🟢 B: Chưa tốt</span>
-                    <span style={{ color: '#00F298', fontWeight: 700 }}>⚪ Ổn</span>
+                    <span style={{ color: '#FFD700', fontWeight: 700 }}>⭐ S: Gánh team</span>
+                    <span style={{ color: '#A78BFA', fontWeight: 700 }}>⚡ A: Chắc chân</span>
+                    <span style={{ color: '#38BDF8', fontWeight: 700 }}>🟢 B: Dưỡng sinh</span>
+                    <span style={{ color: '#00F298', fontWeight: 700 }}>⚪ Ổn: Tròn vai</span>
                   </div>
                 </div>
 

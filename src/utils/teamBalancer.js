@@ -44,51 +44,51 @@ export const POSITIONS = {
 export const RATINGS = {
   S: {
     id: 'S',
-    name: 'Hạng S',
-    label: 'Đá hay, toàn diện',
+    name: 'Gánh team',
+    label: 'Gánh team, đột biến',
     score: 10,
     color: '#FFD700',
     star: '⭐',
-    badge: '⭐ S',
+    badge: '⭐ Gánh team',
     bg: 'rgba(255, 215, 0, 0.12)',
     border: 'rgba(255, 215, 0, 0.35)',
-    desc: 'Đá hay, công thủ toàn diện'
+    desc: 'Tạo đột biến, gánh team toàn diện'
   },
   A: {
     id: 'A',
-    name: 'Hạng A',
-    label: 'Biết đá, 1 sở trường',
+    name: 'Chắc chân',
+    label: 'Đá cứng, chắc chân',
     score: 6,
     color: '#A78BFA',
     star: '⚡',
-    badge: '⚡ A',
+    badge: '⚡ Chắc chân',
     bg: 'rgba(167, 139, 250, 0.12)',
     border: 'rgba(167, 139, 250, 0.35)',
-    desc: 'Biết đá và mạnh 1 sở trường'
+    desc: 'Đá cứng, tự tin ở vị trí này'
   },
   B: {
     id: 'B',
-    name: 'Hạng B',
-    label: 'Biết nhưng chưa tốt',
+    name: 'Dưỡng sinh',
+    label: 'Dưỡng sinh, vui vẻ',
     score: 3,
     color: '#38BDF8',
     star: '🟢',
-    badge: '🟢 B',
+    badge: '🟢 Dưỡng sinh',
     bg: 'rgba(56, 189, 248, 0.12)',
     border: 'rgba(56, 189, 248, 0.35)',
-    desc: 'Biết nhưng đá chưa tốt'
+    desc: 'Đá vui vẻ, chạy nhiệt giao lưu'
   },
   'Ổn': {
     id: 'Ổn',
-    name: 'Mức Ổn',
-    label: 'Đá ở mức ổn',
+    name: 'Tròn vai',
+    label: 'Đá tròn vai',
     score: 5,
     color: '#00F298',
     star: '⚪',
-    badge: '⚪ Ổn',
+    badge: '⚪ Tròn vai',
     bg: 'rgba(0, 242, 152, 0.12)',
     border: 'rgba(0, 242, 152, 0.35)',
-    desc: 'Khả năng cơ bản, đá ở mức ổn'
+    desc: 'Đá được, hoàn thành nhiệm vụ'
   }
 };
 
