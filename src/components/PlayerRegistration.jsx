@@ -160,16 +160,17 @@ export default function PlayerRegistration({
 
   return (
     <div style={{ marginBottom: '16px' }}>
-      {/* Primary Trigger Button: THAM GIA */}
+      {/* Primary Trigger Button: THAM GIA (Fully Mobile-Optimized) */}
       <button
         type="button"
         id="btn-open-join-modal"
         onClick={() => !isLocked && setIsOpen(true)}
         disabled={isLocked}
-        className="btn"
         style={{
           width: '100%',
-          padding: '14px 20px',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
+          padding: '12px 14px',
           borderRadius: '16px',
           background: isLocked 
             ? 'rgba(255, 255, 255, 0.04)' 
@@ -180,59 +181,77 @@ export default function PlayerRegistration({
             : '1px solid rgba(255, 255, 255, 0.25)',
           boxShadow: isLocked 
             ? 'none' 
-            : '0 8px 28px -4px rgba(0, 242, 152, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+            : '0 8px 24px -4px rgba(0, 242, 152, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.45)',
           cursor: isLocked ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: '10px',
+          whiteSpace: 'normal',
+          overflow: 'hidden',
           transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
           <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
-            background: isLocked ? 'rgba(255, 71, 87, 0.12)' : 'rgba(0, 0, 0, 0.15)',
+            width: '38px',
+            height: '38px',
+            minWidth: '38px',
+            flexShrink: 0,
+            borderRadius: '11px',
+            background: isLocked ? 'rgba(255, 71, 87, 0.12)' : 'rgba(0, 0, 0, 0.16)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.25rem',
+            fontSize: '1.2rem',
             boxShadow: isLocked ? 'none' : 'inset 0 1px 1px rgba(255,255,255,0.2)'
           }}>
             {isLocked ? '🔒' : '⚽'}
           </div>
 
-          <div style={{ textAlign: 'left' }}>
+          <div style={{ textAlign: 'left', minWidth: 0, flex: 1, overflow: 'hidden' }}>
             <div style={{ 
-              fontSize: '1.05rem', 
+              fontSize: '1rem', 
               fontWeight: 800, 
-              letterSpacing: '0.03em', 
+              letterSpacing: '0.02em', 
               textTransform: 'uppercase',
-              lineHeight: 1.2
+              lineHeight: 1.2,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>
-              {isLocked ? 'KÈO ĐÃ KHÓA ĐĂNG KÝ' : 'THAM GIA'}
+              {isLocked ? 'KÈO ĐÃ KHÓA' : 'THAM GIA'}
             </div>
-            <div style={{ fontSize: '0.74rem', opacity: isLocked ? 0.75 : 0.85, fontWeight: 600, marginTop: '2px' }}>
-              {isLocked ? 'Đã chốt danh sách thi đấu' : 'Bấm để chọn vị trí & trình độ thi đấu'}
+            <div style={{ 
+              fontSize: '0.72rem', 
+              opacity: isLocked ? 0.75 : 0.88, 
+              fontWeight: 500, 
+              marginTop: '2px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {isLocked ? 'Đã chốt danh sách thi đấu' : 'Chọn vị trí & trình độ thi đấu'}
             </div>
           </div>
         </div>
 
         {!isLocked && (
           <div style={{
-            background: 'rgba(0, 0, 0, 0.25)',
-            padding: '7px 16px',
-            borderRadius: '24px',
-            fontSize: '0.82rem',
+            flexShrink: 0,
+            background: 'rgba(0, 0, 0, 0.22)',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '0.78rem',
             fontWeight: 800,
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.18)'
+            gap: '4px',
+            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.18)',
+            whiteSpace: 'nowrap'
           }}>
-            <UserPlus size={15} />
-            <span>Đăng Ký →</span>
+            <UserPlus size={14} />
+            <span>Đăng Ký</span>
           </div>
         )}
       </button>
@@ -254,15 +273,17 @@ export default function PlayerRegistration({
             className="modal-content" 
             onClick={(e) => e.stopPropagation()} 
             style={{ 
-              maxWidth: '480px', 
-              width: '94%',
-              padding: '22px 24px',
+              maxWidth: '460px', 
+              width: '100%',
+              boxSizing: 'border-box',
+              padding: '18px 16px',
               animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
               background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
               border: '1px solid rgba(255, 255, 255, 0.12)',
               borderTop: '1px solid rgba(255, 255, 255, 0.22)',
               borderRadius: '20px',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)'
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
+              overflowX: 'hidden'
             }}
           >
             {/* Modal Header */}
@@ -419,7 +440,7 @@ export default function PlayerRegistration({
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
                   {Object.values(ROLE_CONFIGS).map((pos) => {
                     const isSelected = position === pos.id;
                     return (
@@ -428,7 +449,9 @@ export default function PlayerRegistration({
                         type="button"
                         onClick={() => setPosition(pos.id)}
                         style={{
-                          padding: '10px 4px',
+                          padding: '9px 2px',
+                          minWidth: 0,
+                          boxSizing: 'border-box',
                           borderRadius: '12px',
                           border: isSelected 
                             ? `1.5px solid ${pos.borderActive}` 
@@ -441,7 +464,7 @@ export default function PlayerRegistration({
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          gap: '4px',
+                          gap: '3px',
                           boxShadow: isSelected 
                             ? `0 6px 18px ${pos.glow}, inset 0 1px 0 rgba(255,255,255,0.2)` 
                             : 'none',
@@ -455,17 +478,19 @@ export default function PlayerRegistration({
                           {pos.icon}
                         </div>
                         <span style={{ 
-                          fontSize: '0.86rem', 
+                          fontSize: '0.84rem', 
                           fontWeight: 800, 
                           color: isSelected ? pos.color : '#FFFFFF',
-                          letterSpacing: '0.02em'
+                          letterSpacing: '0.01em',
+                          whiteSpace: 'nowrap'
                         }}>
                           {pos.id}
                         </span>
                         <span style={{ 
-                          fontSize: '0.67rem', 
+                          fontSize: '0.64rem', 
                           color: isSelected ? '#E2E8F0' : '#64748B',
-                          fontWeight: isSelected ? 600 : 500
+                          fontWeight: isSelected ? 600 : 500,
+                          whiteSpace: 'nowrap'
                         }}>
                           {pos.label}
                         </span>
@@ -494,7 +519,7 @@ export default function PlayerRegistration({
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
                   {Object.values(TIER_CONFIGS).map((rat) => {
                     const isSelected = rating === rat.id;
                     return (
@@ -503,7 +528,9 @@ export default function PlayerRegistration({
                         type="button"
                         onClick={() => setRating(rat.id)}
                         style={{
-                          padding: '12px 8px 10px 8px',
+                          padding: '10px 4px 8px 4px',
+                          minWidth: 0,
+                          boxSizing: 'border-box',
                           borderRadius: '14px',
                           border: isSelected 
                             ? `1.5px solid ${rat.borderActive}` 
@@ -516,7 +543,7 @@ export default function PlayerRegistration({
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          gap: '4px',
+                          gap: '3px',
                           textAlign: 'center',
                           boxShadow: isSelected 
                             ? `0 8px 24px ${rat.glow}, inset 0 1px 0 rgba(255,255,255,0.25)` 
@@ -528,15 +555,16 @@ export default function PlayerRegistration({
                           {rat.icon}
                         </div>
                         <span style={{ 
-                          fontSize: '0.88rem', 
+                          fontSize: '0.86rem', 
                           fontWeight: 800, 
                           color: isSelected ? rat.color : '#FFFFFF',
-                          letterSpacing: '0.01em'
+                          letterSpacing: '0.01em',
+                          whiteSpace: 'nowrap'
                         }}>
                           {rat.title}
                         </span>
                         <span style={{ 
-                          fontSize: '0.67rem', 
+                          fontSize: '0.64rem', 
                           color: isSelected ? '#F1F5F9' : '#64748B', 
                           lineHeight: 1.25,
                           fontWeight: isSelected ? 600 : 400
