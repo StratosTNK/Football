@@ -5,7 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json; charset=utf-8'
+  'Content-Type': 'application/json; charset=utf-8',
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+  'Pragma': 'no-cache',
+  'Expires': '0'
 };
 
 const getDefaultMatchState = () => {
@@ -46,26 +49,44 @@ function findKV(env) {
 
 async function getState(env) {
   const kv = findKV(env);
+  let kvData = null;
   if (kv) {
     try {
-      const data = await kv.get('current_match', 'json');
-      if (data && data.title) return data;
-      const initial = getDefaultMatchState();
-      await kv.put('current_match', JSON.stringify(initial));
-      return initial;
+      kvData = await kv.get('current_match', 'json');
     } catch (e) {
       console.error('KV get error:', e);
     }
   }
 
-  if (memoryState) return memoryState;
-  memoryState = getDefaultMatchState();
-  return memoryState;
+  // If memoryState exists and is newer than kvData, prioritize memoryState to prevent eventual consistency lag
+  if (memoryState && memoryState.lastUpdated) {
+    if (!kvData || !kvData.lastUpdated || new Date(memoryState.lastUpdated) > new Date(kvData.lastUpdated)) {
+      return memoryState;
+    }
+  }
+
+  if (kvData && kvData.title) {
+    memoryState = kvData;
+    return kvData;
+  }
+
+  if (memoryState && memoryState.title) return memoryState;
+
+  const initial = getDefaultMatchState();
+  if (kv) {
+    try {
+      await kv.put('current_match', JSON.stringify(initial));
+    } catch (e) {
+      console.error('KV put error:', e);
+    }
+  }
+  memoryState = initial;
+  return initial;
 }
 
 async function putState(env, data) {
   data.lastUpdated = new Date().toISOString();
-  memoryState = data;
+  memoryState = JSON.parse(JSON.stringify(data));
   const kv = findKV(env);
   if (kv) {
     try {

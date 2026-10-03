@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Settings, 
   Calendar, 
@@ -44,20 +44,28 @@ export default function AdminPanel({
   const [newPassword, setNewPassword] = useState('');
   const [changingPass, setChangingPass] = useState(false);
 
-  // Keep state synchronized with incoming match changes
+  const isInitializedRef = useRef(false);
+
+  // Synchronize match data into the form ONLY when the modal is freshly opened
+  // While isOpen is true, do NOT overwrite the inputs so the user can type and edit without interruption
   useEffect(() => {
-    if (match) {
-      setTitle(match.title || '');
-      setStadium(match.stadium || '');
-      setLocation(match.location || '');
-      setMatchDate(match.matchDate || '');
-      setMatchTime(match.matchTime || '');
-      setMaxPlayers(match.maxPlayers || 14);
-      setTeamCount(match.teamCount || 2);
-      setNotes(match.notes || '');
-      setStatus(match.status || 'OPEN');
+    if (isOpen) {
+      if (!isInitializedRef.current && match) {
+        setTitle(match.title || '');
+        setStadium(match.stadium || '');
+        setLocation(match.location || '');
+        setMatchDate(match.matchDate || '');
+        setMatchTime(match.matchTime || '');
+        setMaxPlayers(match.maxPlayers || 14);
+        setTeamCount(match.teamCount || 2);
+        setNotes(match.notes || '');
+        setStatus(match.status || 'OPEN');
+        isInitializedRef.current = true;
+      }
+    } else {
+      isInitializedRef.current = false;
     }
-  }, [match]);
+  }, [isOpen, match]);
 
   // Find matched pitch in Da Nang database
   const matchedPitch = DANANG_PITCHES.find(p => 
@@ -101,6 +109,7 @@ export default function AdminPanel({
         status
       });
       showToast?.('✅ Đã lưu cài đặt kèo đá bóng thành công!');
+      isInitializedRef.current = false;
       onClose(); // Automatically close modal after saving
     } catch (err) {
       showToast?.('❌ ' + (err?.message || 'Lỗi khi lưu thông tin kèo.'));

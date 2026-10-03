@@ -113,11 +113,22 @@ export default function App() {
   };
 
   const prevStatusRef = useRef(null);
+  const showAdminPanelRef = useRef(showAdminPanel);
+  useEffect(() => {
+    showAdminPanelRef.current = showAdminPanel;
+  }, [showAdminPanel]);
 
   // Fetch match data
   const fetchMatch = async (silent = false) => {
     try {
-      const res = await fetch('/api/match');
+      if (!silent) setLoading(true);
+      const res = await fetch(`/api/match?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!res.ok) {
         if (!silent) setLoading(false);
         return;
@@ -144,14 +155,15 @@ export default function App() {
     fetchMatch();
 
     // Auto sync every 3 seconds for all players on different devices
+    // Pauses while AdminPanel is open to prevent background sync from interfering with editing
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && !showAdminPanelRef.current) {
         fetchMatch(true);
       }
     }, 3000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && !showAdminPanelRef.current) {
         fetchMatch(true);
       }
     };
@@ -202,6 +214,9 @@ export default function App() {
     }
     if (data.data) {
       setMatch(data.data);
+      try {
+        localStorage.setItem('dsu_cached_match', JSON.stringify(data.data));
+      } catch {}
     }
     return data;
   };
@@ -220,6 +235,9 @@ export default function App() {
     removeAddedPlayerId(playerId);
     if (data.data) {
       setMatch(data.data);
+      try {
+        localStorage.setItem('dsu_cached_match', JSON.stringify(data.data));
+      } catch {}
     }
     return data;
   };
@@ -267,6 +285,9 @@ export default function App() {
     }
     if (data.data) {
       setMatch(data.data);
+      try {
+        localStorage.setItem('dsu_cached_match', JSON.stringify(data.data));
+      } catch {}
     }
     return data;
   };
