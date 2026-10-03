@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Edit2, Trash2, Check, X, Shuffle, AlertCircle } from 'lucide-react';
+import { POSITIONS, RATINGS } from '../utils/teamBalancer';
 
 export default function PlayerList({ 
   match, 
@@ -16,6 +17,8 @@ export default function PlayerList({
   const { players = [] } = match;
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
+  const [editPosition, setEditPosition] = useState('MF');
+  const [editRating, setEditRating] = useState('A');
   const [confirmPlayer, setConfirmPlayer] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [teamCount, setTeamCount] = useState(match.teamCount || 2);
@@ -39,7 +42,7 @@ export default function PlayerList({
     setSplitting(true);
     try {
       await onRandomSplit(teamCount);
-      showToast(`🎲 Đã chia ngẫu nhiên thành ${teamCount} đội!`);
+      showToast(`🎲 Đã phân chia ${teamCount} đội công bằng theo trình độ và vị trí!`);
       setShowSplitCard(false);
     } catch (err) {
       showToast(err.message || 'Lỗi khi chia đội.');
@@ -51,6 +54,8 @@ export default function PlayerList({
   const startEdit = (player) => {
     setEditingId(player.id);
     setEditName(player.name);
+    setEditPosition(player.position || 'MF');
+    setEditRating(player.rating || 'A');
   };
 
   const cancelEdit = () => {
@@ -64,9 +69,13 @@ export default function PlayerList({
       return;
     }
     try {
-      await onEditPlayer(playerId, editName.trim());
+      await onEditPlayer(playerId, {
+        name: editName.trim(),
+        position: editPosition,
+        rating: editRating
+      });
       setEditingId(null);
-      showToast('Đã lưu tên cầu thủ.');
+      showToast('Đã lưu thông tin cầu thủ.');
     } catch {
       showToast('Lỗi lưu thông tin.');
     }
@@ -242,9 +251,25 @@ export default function PlayerList({
                 ? 'Đang bốc thăm...' 
                 : players.length < 2 
                   ? 'Cần ít nhất 2 cầu thủ để chia' 
-                  : `BỐC THĂM CHIA ${teamCount} ĐỘI NGẪU NHIÊN`}
+                  : `BỐC THĂM CHIA ${teamCount} ĐỘI CÔNG BẰNG`}
             </span>
           </button>
+
+          <div style={{
+            fontSize: '0.71rem',
+            color: '#38BDF8',
+            marginTop: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            background: 'rgba(56, 189, 248, 0.08)',
+            padding: '6px 10px',
+            borderRadius: '6px',
+            border: '1px solid rgba(56, 189, 248, 0.2)'
+          }}>
+            <span>⚖️</span>
+            <span>Thuật toán tự động cân bằng trình độ (S/A/B) và vị trí sở trường (GK/DF/MF/FW) đều cho các đội.</span>
+          </div>
         </div>
       )}
 
@@ -254,82 +279,179 @@ export default function PlayerList({
           Chưa có ai điểm danh. Hãy nhập tên ở trên để tham gia! ⚽
         </div>
       ) : (
-        <div className="player-grid">
-          {players.map((player, idx) => {
-            const isEditing = editingId === player.id;
-            const isMyAdded = myAddedIds.includes(player.id);
-            // Can remove: Admin can remove anytime; Guests can remove when match is OPEN
-            const canRemove = isAdmin || match.status === 'OPEN';
+        <>
+          {/* Team Composition Overview Bar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '8px',
+            marginBottom: '12px',
+            fontSize: '0.72rem',
+            background: 'rgba(255, 255, 255, 0.02)',
+            padding: '7px 12px',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Vị trí:</span>
+              <span style={{ color: POSITIONS.GK.color, fontWeight: 700 }}>🧤 {players.filter(p => (p.position || 'MF') === 'GK').length} GK</span>
+              <span style={{ color: POSITIONS.DF.color, fontWeight: 700 }}>🛡️ {players.filter(p => (p.position || 'MF') === 'DF').length} DF</span>
+              <span style={{ color: POSITIONS.MF.color, fontWeight: 700 }}>⚽ {players.filter(p => (p.position || 'MF') === 'MF').length} MF</span>
+              <span style={{ color: POSITIONS.FW.color, fontWeight: 700 }}>🎯 {players.filter(p => (p.position || 'MF') === 'FW').length} FW</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Trình độ:</span>
+              <span style={{ color: RATINGS.S.color, fontWeight: 800 }}>⭐ {players.filter(p => (p.rating || 'A') === 'S').length} S</span>
+              <span style={{ color: RATINGS.A.color, fontWeight: 800 }}>⚡ {players.filter(p => (p.rating || 'A') === 'A').length} A</span>
+              <span style={{ color: RATINGS.B.color, fontWeight: 800 }}>🟢 {players.filter(p => (p.rating || 'A') === 'B').length} B</span>
+            </div>
+          </div>
 
-            return (
-              <div key={player.id} className="player-item">
-                {isEditing ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--emerald)' }}>#{idx + 1}</span>
-                    <input 
-                      type="text" 
-                      className="clean-input" 
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      style={{ padding: '4px 8px', fontSize: '0.85rem' }}
-                      autoFocus
-                    />
-                    <button 
-                      onClick={() => saveEdit(player.id)} 
-                      className="btn btn-primary"
-                      style={{ padding: '4px 6px' }}
-                    >
-                      <Check size={14} />
-                    </button>
-                    <button 
-                      onClick={cancelEdit} 
-                      className="btn btn-secondary"
-                      style={{ padding: '4px 6px' }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                      <span style={{ 
-                        fontSize: '0.75rem', 
-                        fontWeight: 700, 
-                        color: 'var(--text-dim)',
-                        minWidth: '20px'
-                      }}>
-                        #{idx + 1}
-                      </span>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>
-                          {player.name}
-                        </span>
-                        {isMyAdded && (
-                          <span style={{ 
-                            fontSize: '0.68rem', 
-                            color: 'var(--emerald)', 
-                            background: 'rgba(0, 242, 152, 0.12)',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            marginLeft: '6px',
-                            fontWeight: 700
-                          }}>
-                            Bạn
-                          </span>
-                        )}
+          <div className="player-grid">
+            {players.map((player, idx) => {
+              const isEditing = editingId === player.id;
+              const isMyAdded = myAddedIds.includes(player.id);
+              // Can remove: Admin can remove anytime; Guests can remove when match is OPEN
+              const canRemove = isAdmin || match.status === 'OPEN';
+              const pos = POSITIONS[player.position] || POSITIONS.MF;
+              const rat = RATINGS[player.rating] || RATINGS.A;
+
+              return (
+                <div key={player.id} className="player-item">
+                  {isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', padding: '4px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--emerald)' }}>#{idx + 1}</span>
+                        <input 
+                          type="text" 
+                          className="clean-input" 
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          style={{ padding: '4px 8px', fontSize: '0.85rem', flex: 1 }}
+                          autoFocus
+                        />
+                        <button 
+                          onClick={() => saveEdit(player.id)} 
+                          className="btn btn-primary"
+                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button 
+                          onClick={cancelEdit} 
+                          className="btn btn-secondary"
+                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '0.74rem', flexWrap: 'wrap' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Vị trí:</span>
+                        <select 
+                          value={editPosition} 
+                          onChange={(e) => setEditPosition(e.target.value)}
+                          className="clean-input"
+                          style={{ padding: '2px 6px', fontSize: '0.74rem' }}
+                        >
+                          <option value="FW">🎯 FW - Tiền đạo</option>
+                          <option value="MF">⚽ MF - Tiền vệ</option>
+                          <option value="DF">🛡️ DF - Hậu vệ</option>
+                          <option value="GK">🧤 GK - Thủ môn</option>
+                        </select>
+                        <span style={{ color: 'var(--text-muted)', marginLeft: '4px' }}>Trình độ:</span>
+                        <select 
+                          value={editRating} 
+                          onChange={(e) => setEditRating(e.target.value)}
+                          className="clean-input"
+                          style={{ padding: '2px 6px', fontSize: '0.74rem' }}
+                        >
+                          <option value="S">⭐ S - Đá hay, toàn diện</option>
+                          <option value="A">⚡ A - Biết đá, 1 sở trường</option>
+                          <option value="B">🟢 B - Biết nhưng chưa tốt</option>
+                        </select>
                       </div>
                     </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', flex: 1 }}>
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          fontWeight: 700, 
+                          color: 'var(--text-dim)',
+                          minWidth: '20px'
+                        }}>
+                          #{idx + 1}
+                        </span>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>
+                            {player.name}
+                          </span>
 
-                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                      {isAdmin && (
-                        <button 
-                          onClick={() => startEdit(player)}
-                          style={{ background: 'none', border: 'none', color: '#FFA502', cursor: 'pointer', padding: '4px' }}
-                          title="Sửa tên"
-                        >
-                          <Edit2 size={13} />
-                        </button>
-                      )}
+                          {/* Position Badge */}
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            color: pos.color,
+                            background: pos.badgeBg,
+                            border: `1px solid ${pos.border}`,
+                            padding: '1px 5px',
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '2px',
+                            flexShrink: 0
+                          }} title={pos.name}>
+                            <span>{pos.icon}</span>
+                            <span>{pos.id}</span>
+                          </span>
+
+                          {/* Rating Badge */}
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            color: rat.color,
+                            background: rat.bg,
+                            border: `1px solid ${rat.border}`,
+                            padding: '1px 5px',
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '2px',
+                            flexShrink: 0,
+                            boxShadow: rat.id === 'S' ? '0 0 6px rgba(255, 215, 0, 0.4)' : 'none'
+                          }} title={rat.desc}>
+                            <span>{rat.star}</span>
+                            <span>{rat.id}</span>
+                          </span>
+
+                          {isMyAdded && (
+                            <span style={{ 
+                              fontSize: '0.65rem', 
+                              color: 'var(--emerald)', 
+                              background: 'rgba(0, 242, 152, 0.12)',
+                              padding: '1px 5px',
+                              borderRadius: '4px',
+                              fontWeight: 700,
+                              flexShrink: 0
+                            }}>
+                              Bạn
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                        {isAdmin && (
+                          <button 
+                            onClick={() => startEdit(player)}
+                            style={{ background: 'none', border: 'none', color: '#FFA502', cursor: 'pointer', padding: '4px' }}
+                            title="Sửa thông tin cầu thủ"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                        )}
 
                       {canRemove && (
                         <button 
@@ -357,7 +479,8 @@ export default function PlayerList({
               </div>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Sleek In-App Confirmation Modal (Fixes window.confirm blocked on mobile/Zalo) */}

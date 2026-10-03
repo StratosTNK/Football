@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { formatTeamsForZalo, formatDateDMY } from '../utils/zaloFormatter';
+import { POSITIONS, RATINGS, calculateTeamStats } from '../utils/teamBalancer';
 
 export default function TeamDivider({ 
   match, 
@@ -179,36 +180,79 @@ export default function TeamDivider({
         }}
       >
         {/* Team Section Header Banner */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: teamMeta.id === 1 
-            ? 'linear-gradient(90deg, rgba(255, 71, 87, 0.22), rgba(255, 71, 87, 0.05))' 
-            : teamMeta.id === 2 
-              ? 'linear-gradient(90deg, rgba(30, 144, 255, 0.22), rgba(30, 144, 255, 0.05))' 
-              : 'linear-gradient(90deg, rgba(255, 165, 2, 0.22), rgba(255, 165, 2, 0.05))',
-          borderLeft: `4px solid ${teamMeta.color}`,
-          padding: '7px 12px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1rem' }}>{teamMeta.icon}</span>
-            <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#fff', letterSpacing: '0.02em' }}>
-              {teamMeta.name}
-            </span>
-          </div>
-          <span style={{
-            fontSize: '0.72rem',
-            color: teamMeta.color,
-            fontWeight: 800,
-            background: 'rgba(0, 0, 0, 0.45)',
-            padding: '2px 9px',
-            borderRadius: '12px',
-            border: `1px solid ${teamMeta.color}45`
-          }}>
-            {teamPlayers.length} Cầu thủ
-          </span>
-        </div>
+        {(() => {
+          const stats = calculateTeamStats(teamPlayers);
+          return (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              background: teamMeta.id === 1 
+                ? 'linear-gradient(90deg, rgba(255, 71, 87, 0.22), rgba(255, 71, 87, 0.05))' 
+                : teamMeta.id === 2 
+                  ? 'linear-gradient(90deg, rgba(30, 144, 255, 0.22), rgba(30, 144, 255, 0.05))' 
+                  : 'linear-gradient(90deg, rgba(255, 165, 2, 0.22), rgba(255, 165, 2, 0.05))',
+              borderLeft: `4px solid ${teamMeta.color}`,
+              padding: '8px 12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '1rem' }}>{teamMeta.icon}</span>
+                  <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#fff', letterSpacing: '0.02em' }}>
+                    {teamMeta.name}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{
+                    fontSize: '0.7rem',
+                    color: '#FFD700',
+                    fontWeight: 800,
+                    background: 'rgba(255, 215, 0, 0.15)',
+                    padding: '2px 7px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 215, 0, 0.3)'
+                  }} title="Tổng điểm sức mạnh của đội">
+                    ⚡ {stats.totalScore}đ
+                  </span>
+                  <span style={{
+                    fontSize: '0.7rem',
+                    color: teamMeta.color,
+                    fontWeight: 800,
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    padding: '2px 8px',
+                    borderRadius: '10px',
+                    border: `1px solid ${teamMeta.color}45`
+                  }}>
+                    {teamPlayers.length} Cầu thủ
+                  </span>
+                </div>
+              </div>
+
+              {teamPlayers.length > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '0.67rem',
+                  color: 'rgba(255, 255, 255, 0.72)',
+                  paddingTop: '2px'
+                }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <span style={{ color: POSITIONS.GK.color }}>🧤 {stats.positions.GK}</span>
+                    <span style={{ color: POSITIONS.DF.color }}>🛡️ {stats.positions.DF}</span>
+                    <span style={{ color: POSITIONS.MF.color }}>⚽ {stats.positions.MF}</span>
+                    <span style={{ color: POSITIONS.FW.color }}>🎯 {stats.positions.FW}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <span style={{ color: RATINGS.S.color, fontWeight: 700 }}>⭐{stats.ratings.S}</span>
+                    <span style={{ color: RATINGS.A.color, fontWeight: 700 }}>⚡{stats.ratings.A}</span>
+                    <span style={{ color: RATINGS.B.color, fontWeight: 700 }}>🟢{stats.ratings.B}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Players in Team */}
         <div className="team-players-grid">
@@ -304,6 +348,48 @@ export default function TeamDivider({
                       }}>
                         {player.name}
                       </span>
+
+                      {/* Position Badge */}
+                      {(() => {
+                        const pos = POSITIONS[player.position] || POSITIONS.MF;
+                        const rat = RATINGS[player.rating] || RATINGS.A;
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                            <span style={{
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              color: pos.color,
+                              background: pos.badgeBg,
+                              border: `1px solid ${pos.border}`,
+                              padding: '1px 4px',
+                              borderRadius: '3px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '2px'
+                            }} title={pos.name}>
+                              <span>{pos.icon}</span>
+                              <span>{pos.id}</span>
+                            </span>
+
+                            <span style={{
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              color: rat.color,
+                              background: rat.bg,
+                              border: `1px solid ${rat.border}`,
+                              padding: '1px 4px',
+                              borderRadius: '3px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '2px',
+                              boxShadow: rat.id === 'S' ? '0 0 5px rgba(255, 215, 0, 0.35)' : 'none'
+                            }} title={rat.desc}>
+                              <span>{rat.star}</span>
+                              <span>{rat.id}</span>
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Only show Close button when actively transferring */}
@@ -1091,42 +1177,85 @@ export default function TeamDivider({
                     flexDirection: 'column'
                   }}>
                     {/* Team Header Banner */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      background: teamMeta.id === 1 
-                        ? 'linear-gradient(90deg, rgba(255, 71, 87, 0.22), rgba(255, 71, 87, 0.05))' 
-                        : teamMeta.id === 2 
-                          ? 'linear-gradient(90deg, rgba(30, 144, 255, 0.22), rgba(30, 144, 255, 0.05))' 
-                          : 'linear-gradient(90deg, rgba(255, 165, 2, 0.22), rgba(255, 165, 2, 0.05))',
-                      borderLeft: `4px solid ${teamMeta.color}`,
-                      padding: '8px 14px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {(() => {
+                      const expStats = calculateTeamStats(teamPlayers);
+                      return (
                         <div style={{
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '50%',
-                          background: teamMeta.color,
-                          boxShadow: `0 0 10px ${teamMeta.color}`
-                        }} />
-                        <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#FFFFFF', letterSpacing: '0.02em' }}>
-                          {teamMeta.name}
-                        </span>
-                      </div>
-                      <span style={{
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        color: teamMeta.color,
-                        background: `${teamMeta.color}20`,
-                        border: `1px solid ${teamMeta.color}40`,
-                        padding: '2px 10px',
-                        borderRadius: '999px'
-                      }}>
-                        {teamPlayers.length} Cầu thủ
-                      </span>
-                    </div>
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          background: teamMeta.id === 1 
+                            ? 'linear-gradient(90deg, rgba(255, 71, 87, 0.22), rgba(255, 71, 87, 0.05))' 
+                            : teamMeta.id === 2 
+                              ? 'linear-gradient(90deg, rgba(30, 144, 255, 0.22), rgba(30, 144, 255, 0.05))' 
+                              : 'linear-gradient(90deg, rgba(255, 165, 2, 0.22), rgba(255, 165, 2, 0.05))',
+                          borderLeft: `4px solid ${teamMeta.color}`,
+                          padding: '8px 14px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                background: teamMeta.color,
+                                boxShadow: `0 0 10px ${teamMeta.color}`
+                              }} />
+                              <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#FFFFFF', letterSpacing: '0.02em' }}>
+                                {teamMeta.name}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                color: '#FFD700',
+                                background: 'rgba(255, 215, 0, 0.18)',
+                                border: '1px solid rgba(255, 215, 0, 0.35)',
+                                padding: '2px 8px',
+                                borderRadius: '999px'
+                              }}>
+                                ⚡ {expStats.totalScore}đ
+                              </span>
+                              <span style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                color: teamMeta.color,
+                                background: `${teamMeta.color}20`,
+                                border: `1px solid ${teamMeta.color}40`,
+                                padding: '2px 10px',
+                                borderRadius: '999px'
+                              }}>
+                                {teamPlayers.length} Cầu thủ
+                              </span>
+                            </div>
+                          </div>
+
+                          {teamPlayers.length > 0 && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              fontSize: '0.67rem',
+                              color: 'rgba(255, 255, 255, 0.75)',
+                              paddingTop: '2px'
+                            }}>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <span style={{ color: POSITIONS.GK.color }}>🧤 {expStats.positions.GK}</span>
+                                <span style={{ color: POSITIONS.DF.color }}>🛡️ {expStats.positions.DF}</span>
+                                <span style={{ color: POSITIONS.MF.color }}>⚽ {expStats.positions.MF}</span>
+                                <span style={{ color: POSITIONS.FW.color }}>🎯 {expStats.positions.FW}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <span style={{ color: RATINGS.S.color, fontWeight: 700 }}>⭐{expStats.ratings.S}</span>
+                                <span style={{ color: RATINGS.A.color, fontWeight: 700 }}>⚡{expStats.ratings.A}</span>
+                                <span style={{ color: RATINGS.B.color, fontWeight: 700 }}>🟢{expStats.ratings.B}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Player rows (Vertical list: 1 item per row) */}
                     <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1168,6 +1297,48 @@ export default function TeamDivider({
                           }}>
                             {player.name}
                           </span>
+
+                          {/* Export Card Position & Rating Badges */}
+                          {(() => {
+                            const pos = POSITIONS[player.position] || POSITIONS.MF;
+                            const rat = RATINGS[player.rating] || RATINGS.A;
+                            return (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  color: pos.color,
+                                  background: pos.badgeBg,
+                                  border: `1px solid ${pos.border}`,
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px'
+                                }}>
+                                  <span>{pos.icon}</span>
+                                  <span>{pos.id}</span>
+                                </span>
+
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  color: rat.color,
+                                  background: rat.bg,
+                                  border: `1px solid ${rat.border}`,
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  boxShadow: rat.id === 'S' ? '0 0 6px rgba(255, 215, 0, 0.4)' : 'none'
+                                }}>
+                                  <span>{rat.star}</span>
+                                  <span>{rat.id}</span>
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>

@@ -61,6 +61,13 @@ export const formatTeamsForZalo = (match) => {
   const team2 = (players || []).filter(p => p.team === 2);
   const team3 = (players || []).filter(p => p.team === 3);
 
+  const playerLabel = (p, idx) => {
+    if (!p) return '';
+    const pos = p.position || 'MF';
+    const rat = p.rating || 'A';
+    return `${idx + 1}. ${p.name} [${pos}-${rat}]`;
+  };
+
   if (actualTeamCount === 2) {
     const padCol = (str, width) => {
       const len = str.length;
@@ -70,20 +77,20 @@ export const formatTeamsForZalo = (match) => {
 
     let maxCol1Len = `🔴 ĐỘI ĐỎ (${team1.length})`.length;
     team1.forEach((p, idx) => {
-      const itemLen = `${idx + 1}. ${p.name}`.length;
+      const itemLen = playerLabel(p, idx).length;
       if (itemLen > maxCol1Len) maxCol1Len = itemLen;
     });
-    const col1Width = Math.min(Math.max(maxCol1Len + 3, 18), 24);
+    const col1Width = Math.min(Math.max(maxCol1Len + 3, 22), 32);
 
     const h1 = `🔴 ĐỘI ĐỎ (${team1.length})`;
     const h2 = `🔵 ĐỘI XANH (${team2.length})`;
     text += `\n${padCol(h1, col1Width)}${h2}\n`;
-    text += `─`.repeat(Math.max(col1Width + h2.length, 32)) + `\n`;
+    text += `─`.repeat(Math.max(col1Width + h2.length, 36)) + `\n`;
 
     const maxRows = Math.max(team1.length, team2.length);
     for (let i = 0; i < maxRows; i++) {
-      const c1 = team1[i] ? `${i + 1}. ${team1[i].name}` : '';
-      const c2 = team2[i] ? `${i + 1}. ${team2[i].name}` : '';
+      const c1 = team1[i] ? playerLabel(team1[i], i) : '';
+      const c2 = team2[i] ? playerLabel(team2[i], i) : '';
       text += `${padCol(c1, col1Width)}${c2}\n`;
     }
   } else {
@@ -99,7 +106,7 @@ export const formatTeamsForZalo = (match) => {
         text += `  (Chưa có cầu thủ)\n`;
       } else {
         tm.list.forEach((p, idx) => {
-          text += `  ${idx + 1}. ${p.name}\n`;
+          text += `  ${playerLabel(p, idx)}\n`;
         });
       }
     });
@@ -109,7 +116,7 @@ export const formatTeamsForZalo = (match) => {
   if (unassigned.length > 0) {
     text += `\n⚪ DỰ BỊ / CHƯA GÁN (${unassigned.length} người):\n`;
     unassigned.forEach((p, idx) => {
-      text += `  ${idx + 1}. ${p.name}\n`;
+      text += `  ${playerLabel(p, idx)}\n`;
     });
   }
 

@@ -113,6 +113,121 @@ function verifyAdmin(request, state) {
   return token === state.adminPassword;
 }
 
+const RATING_SCORES = { S: 10, A: 6, B: 3 };
+
+function balanceTeams(players, teamCount = 2) {
+  if (!players || players.length < 2) return players || [];
+  const count = Number(teamCount) || 2;
+
+  const pool = players.map(p => ({
+    ...p,
+    position: (p.position && ['FW', 'MF', 'DF', 'GK'].includes(p.position)) ? p.position : 'MF',
+    rating: (p.rating && ['S', 'A', 'B'].includes(p.rating)) ? p.rating : 'A'
+  }));
+
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  const teams = Array.from({ length: count }, (_, i) => ({
+    id: i + 1,
+    players: [],
+    score: 0,
+    positions: { GK: 0, DF: 0, MF: 0, FW: 0 }
+  }));
+
+  const assign = (team, player) => {
+    team.players.push(player);
+    player.team = team.id;
+    team.score += (RATING_SCORES[player.rating] || 6);
+    team.positions[player.position] = (team.positions[player.position] || 0) + 1;
+  };
+
+  const gks = pool.filter(p => p.position === 'GK');
+  const dfs = pool.filter(p => p.position === 'DF');
+  const fws = pool.filter(p => p.position === 'FW');
+  const mfs = pool.filter(p => p.position === 'MF');
+
+  const distributeGroup = (list) => {
+    list.sort((a, b) => (RATING_SCORES[b.rating] || 6) - (RATING_SCORES[a.rating] || 6));
+    for (const player of list) {
+      const sortedTeams = [...teams].sort((t1, t2) => {
+        const posDiff = (t1.positions[player.position] || 0) - (t2.positions[player.position] || 0);
+        if (posDiff !== 0) return posDiff;
+
+        const sizeDiff = t1.players.length - t2.players.length;
+        if (sizeDiff !== 0) return sizeDiff;
+
+        return t1.score - t2.score;
+      });
+
+      assign(sortedTeams[0], player);
+    }
+  };
+
+  distributeGroup(gks);
+  distributeGroup(dfs);
+  distributeGroup(fws);
+  distributeGroup(mfs);
+
+  // Equal-position swaps optimization to minimize skill gap
+  let improved = true;
+  let iterations = 0;
+  while (improved && iterations < 20) {
+    improved = false;
+    iterations++;
+
+    teams.sort((a, b) => b.score - a.score);
+    const highest = teams[0];
+    const lowest = teams[teams.length - 1];
+    const diff = highest.score - lowest.score;
+
+    if (diff > 2) {
+      let bestSwap = null;
+      let bestNewDiff = diff;
+
+      for (const pHigh of highest.players) {
+        for (const pLow of lowest.players) {
+          if (pHigh.position === pLow.position) {
+            const scoreChange = (RATING_SCORES[pHigh.rating] || 6) - (RATING_SCORES[pLow.rating] || 6);
+            if (scoreChange > 0) {
+              const newHigh = highest.score - scoreChange;
+              const newLow = lowest.score + scoreChange;
+              const newDiff = Math.abs(newHigh - newLow);
+              if (newDiff < bestNewDiff) {
+                bestNewDiff = newDiff;
+                bestSwap = { pHigh, pLow, change: scoreChange };
+              }
+            }
+          }
+        }
+      }
+
+      if (bestSwap) {
+        const { pHigh, pLow, change } = bestSwap;
+        pHigh.team = lowest.id;
+        pLow.team = highest.id;
+
+        highest.players = highest.players.filter(p => p.id !== pHigh.id).concat(pLow);
+        lowest.players = lowest.players.filter(p => p.id !== pLow.id).concat(pHigh);
+
+        highest.score -= change;
+        lowest.score += change;
+
+        improved = true;
+      }
+    }
+  }
+
+  const resultMap = new Map();
+  teams.forEach(t => {
+    t.players.forEach(p => resultMap.set(p.id, p));
+  });
+
+  return pool.map(p => resultMap.get(p.id) || p);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
   const method = request.method;
@@ -147,7 +262,7 @@ export async function onRequest(context) {
     // 2. POST /api/player/join
     if (method === 'POST' && pathname === '/api/player/join') {
       const body = await getBody();
-      const { name, note } = body;
+      const { name, note, position, rating } = body;
       if (!name || !name.trim()) {
         return new Response(JSON.stringify({ success: false, message: 'Vui lòng nhập tên của bạn!' }), { status: 400, headers: corsHeaders });
       }
@@ -162,10 +277,18 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ success: false, message: 'Danh sách đã bị khóa bởi quản trị viên!' }), { status: 400, headers: corsHeaders });
       }
 
+      const validPositions = ['FW', 'MF', 'DF', 'GK'];
+      const validRatings = ['S', 'A', 'B'];
+
+      const pos = validPositions.includes(position) ? position : 'MF';
+      const rat = validRatings.includes(rating) ? rating : 'A';
+
       const newPlayer = {
         id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         name: cleanName,
         note: note ? note.trim() : '',
+        position: pos,
+        rating: rat,
         team: 0,
         createdAt: new Date().toISOString()
       };
@@ -242,17 +365,7 @@ export async function onRequest(context) {
         return new Response(JSON.stringify({ success: false, message: 'Cần ít nhất 2 cầu thủ để chia đội!' }), { status: 400, headers: corsHeaders });
       }
 
-      const shuffled = [...state.players];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-
-      shuffled.forEach((player, idx) => {
-        player.team = (idx % teamCount) + 1;
-      });
-
-      state.players = shuffled;
+      state.players = balanceTeams(state.players, teamCount);
       state.status = 'BALANCED';
 
       await putState(env, state);
@@ -319,7 +432,7 @@ export async function onRequest(context) {
       }
 
       const body = await getBody();
-      const { playerId, name } = body;
+      const { playerId, name, position, rating } = body;
       const player = state.players.find(p => p.id === playerId);
       if (!player) {
         return new Response(JSON.stringify({ success: false, message: 'Không tìm thấy cầu thủ!' }), { status: 404, headers: corsHeaders });
@@ -327,6 +440,12 @@ export async function onRequest(context) {
 
       if (name && name.trim()) {
         player.name = name.trim();
+      }
+      if (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) {
+        player.position = position;
+      }
+      if (rating && ['S', 'A', 'B'].includes(rating)) {
+        player.rating = rating;
       }
 
       await putState(env, state);
@@ -354,14 +473,19 @@ export async function onRequest(context) {
       }
 
       const body = await getBody();
-      const { name, team } = body;
+      const { name, team, position, rating } = body;
       if (!name || !name.trim()) {
         return new Response(JSON.stringify({ success: false, message: 'Vui lòng nhập tên!' }), { status: 400, headers: corsHeaders });
       }
 
+      const pos = ['FW', 'MF', 'DF', 'GK'].includes(position) ? position : 'MF';
+      const rat = ['S', 'A', 'B'].includes(rating) ? rating : 'A';
+
       const newPlayer = {
         id: 'p_admin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         name: name.trim(),
+        position: pos,
+        rating: rat,
         team: Number(team) || 0,
         createdAt: new Date().toISOString()
       };

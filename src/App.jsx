@@ -199,11 +199,12 @@ export default function App() {
   // --- API Handlers ---
 
   // 1. Join Match (Public)
-  const handleJoin = async (name) => {
+  const handleJoin = async (payload) => {
+    const body = typeof payload === 'string' ? { name: payload } : payload;
     const res = await fetch('/api/player/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
+      body: JSON.stringify(body)
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
@@ -314,9 +315,10 @@ export default function App() {
     return adminFetch('/api/admin/update-player-team', { playerId, team });
   };
 
-  // 9. Admin Edit Player Name
-  const handleEditPlayer = async (playerId, name) => {
-    return adminFetch('/api/admin/edit-player', { playerId, name });
+  // 9. Admin Edit Player (Name, Position, Rating)
+  const handleEditPlayer = async (playerId, updateData) => {
+    const payload = typeof updateData === 'string' ? { playerId, name: updateData } : { playerId, ...updateData };
+    return adminFetch('/api/admin/edit-player', payload);
   };
 
   // 10. Admin Delete Player
@@ -326,8 +328,9 @@ export default function App() {
   };
 
   // 11. Admin Add Player Directly
-  const handleAddPlayer = async (name, team) => {
-    return adminFetch('/api/admin/add-player', { name, team });
+  const handleAddPlayer = async (playerPayload, team = 0) => {
+    const payload = typeof playerPayload === 'string' ? { name: playerPayload, team } : { team, ...playerPayload };
+    return adminFetch('/api/admin/add-player', payload);
   };
 
   // 12. Admin Clear All Players (New Match)
@@ -497,13 +500,26 @@ export default function App() {
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', marginBottom: '6px' }}>
                 Bốc Thăm Chia Đội
               </h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
                 {match.players?.length >= 2 ? (
                   <span>Danh sách hiện có <strong>{match.players.length}</strong> cầu thủ</span>
                 ) : (
                   <span style={{ color: '#FFA502' }}>Cần ít nhất 2 cầu thủ để chia đội</span>
                 )}
               </p>
+
+              <div style={{
+                fontSize: '0.72rem',
+                color: '#38BDF8',
+                background: 'rgba(56, 189, 248, 0.09)',
+                border: '1px solid rgba(56, 189, 248, 0.22)',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                marginBottom: '14px',
+                textAlign: 'center'
+              }}>
+                ⚖️ Tự động cân bằng trình độ (S/A/B) và vị trí (GK/DF/MF/FW)
+              </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {/* Option 1: 2 Đội */}
@@ -514,7 +530,7 @@ export default function App() {
                     await handleRandomSplit(2);
                     setViewTab('teams');
                     setShowSplitModal(false);
-                    showToast('🎉 Đã phân đều 2 Đội (Đỏ vs Xanh)!');
+                    showToast('⚖️ Đã phân chia 2 Đội cân bằng theo trình độ và vị trí!');
                   }}
                   className="btn"
                   style={{
@@ -532,7 +548,7 @@ export default function App() {
                   }}
                 >
                   <span>🔴 vs 🔵</span>
-                  <span>Chia 2 Đội (Đỏ vs Xanh)</span>
+                  <span>Chia 2 Đội Cân Bằng (Đỏ vs Xanh)</span>
                 </button>
 
                 {/* Option 2: 3 Đội */}
@@ -543,7 +559,7 @@ export default function App() {
                     await handleRandomSplit(3);
                     setViewTab('teams');
                     setShowSplitModal(false);
-                    showToast('🎉 Đã phân đều 3 Đội (Xoay vòng)!');
+                    showToast('⚖️ Đã phân chia 3 Đội cân bằng theo trình độ và vị trí!');
                   }}
                   className="btn btn-secondary"
                   style={{
@@ -558,7 +574,7 @@ export default function App() {
                   }}
                 >
                   <span>🔴 vs 🔵 vs 🟡</span>
-                  <span>Chia 3 Đội (Xoay vòng)</span>
+                  <span>Chia 3 Đội Cân Bằng (Xoay vòng)</span>
                 </button>
 
                 {/* If already balanced: Show Xáo lại & Hủy phân đội */}
