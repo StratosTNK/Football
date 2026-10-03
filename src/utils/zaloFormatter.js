@@ -63,9 +63,19 @@ export const formatTeamsForZalo = (match) => {
 
   const playerLabel = (p, idx) => {
     if (!p) return '';
-    const pos = p.position || 'MF';
-    const rat = p.rating || 'A';
-    return `${idx + 1}. ${p.name} [${pos}-${rat}]`;
+    let label = '';
+    if (p.skills && typeof p.skills === 'object') {
+      const picks = Object.entries(p.skills).filter(([_, v]) => v && v !== 'Ổn');
+      if (picks.length > 0) {
+        label = picks.map(([pos, rat]) => `${pos}-${rat}`).join('/');
+      }
+    }
+    if (!label) {
+      const pos = p.position || 'MF';
+      const rat = p.rating || 'Ổn';
+      label = `${pos}-${rat}`;
+    }
+    return `${idx + 1}. ${p.name} [${label}]`;
   };
 
   if (actualTeamCount === 2) {

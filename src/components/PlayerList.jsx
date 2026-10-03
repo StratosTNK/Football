@@ -389,42 +389,78 @@ export default function PlayerList({
                             {player.name}
                           </span>
 
-                          {/* Position Badge */}
-                          <span style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 800,
-                            color: pos.color,
-                            background: pos.badgeBg,
-                            border: `1px solid ${pos.border}`,
-                            padding: '1px 5px',
-                            borderRadius: '4px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '2px',
-                            flexShrink: 0
-                          }} title={pos.name}>
-                            <span>{pos.icon}</span>
-                            <span>{pos.id}</span>
-                          </span>
+                          {/* Multi-position or single position badges */}
+                          {(() => {
+                            const strongPicks = player.skills && typeof player.skills === 'object'
+                              ? Object.entries(player.skills).filter(([_, v]) => v && v !== 'Ổn')
+                              : [];
 
-                          {/* Rating Badge */}
-                          <span style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 800,
-                            color: rat.color,
-                            background: rat.bg,
-                            border: `1px solid ${rat.border}`,
-                            padding: '1px 5px',
-                            borderRadius: '4px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '2px',
-                            flexShrink: 0,
-                            boxShadow: rat.id === 'S' ? '0 0 6px rgba(255, 215, 0, 0.4)' : 'none'
-                          }} title={rat.desc}>
-                            <span>{rat.star}</span>
-                            <span>{rat.id}</span>
-                          </span>
+                            if (strongPicks.length > 0) {
+                              return strongPicks.map(([posKey, ratKey]) => {
+                                const pPos = POSITIONS[posKey] || POSITIONS.MF;
+                                const pRat = RATINGS[ratKey] || RATINGS.A;
+                                return (
+                                  <span key={posKey} style={{
+                                    fontSize: '0.64rem',
+                                    fontWeight: 800,
+                                    color: pPos.color,
+                                    background: pPos.badgeBg,
+                                    border: `1px solid ${pPos.border}`,
+                                    padding: '1px 5px',
+                                    borderRadius: '4px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '2px',
+                                    flexShrink: 0
+                                  }} title={`${pPos.name} • Hạng ${ratKey}`}>
+                                    <span>{pPos.icon}</span>
+                                    <span>{pPos.id}</span>
+                                    <span style={{ color: pRat.color, marginLeft: '1px' }}>{ratKey}</span>
+                                  </span>
+                                );
+                              });
+                            }
+
+                            // If all 'Ổn' or legacy format
+                            return (
+                              <>
+                                <span style={{
+                                  fontSize: '0.64rem',
+                                  fontWeight: 800,
+                                  color: pos.color,
+                                  background: pos.badgeBg,
+                                  border: `1px solid ${pos.border}`,
+                                  padding: '1px 5px',
+                                  borderRadius: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  flexShrink: 0
+                                }} title={pos.name}>
+                                  <span>{pos.icon}</span>
+                                  <span>{pos.id}</span>
+                                </span>
+
+                                <span style={{
+                                  fontSize: '0.64rem',
+                                  fontWeight: 800,
+                                  color: rat.color,
+                                  background: rat.bg,
+                                  border: `1px solid ${rat.border}`,
+                                  padding: '1px 5px',
+                                  borderRadius: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  flexShrink: 0,
+                                  boxShadow: rat.id === 'S' ? '0 0 6px rgba(255, 215, 0, 0.4)' : 'none'
+                                }} title={rat.desc}>
+                                  <span>{rat.star}</span>
+                                  <span>{rat.id}</span>
+                                </span>
+                              </>
+                            );
+                          })()}
 
                           {isMyAdded && (
                             <span style={{ 

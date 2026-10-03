@@ -71,20 +71,62 @@ export const RATINGS = {
     name: 'Hạng B',
     label: 'Biết nhưng chưa tốt',
     score: 3,
-    color: '#2DD4BF',
+    color: '#38BDF8',
     star: '🟢',
     badge: '🟢 B',
-    bg: 'rgba(45, 212, 191, 0.12)',
-    border: 'rgba(45, 212, 191, 0.35)',
+    bg: 'rgba(56, 189, 248, 0.12)',
+    border: 'rgba(56, 189, 248, 0.35)',
     desc: 'Biết nhưng đá chưa tốt'
+  },
+  'Ổn': {
+    id: 'Ổn',
+    name: 'Mức Ổn',
+    label: 'Đá ở mức ổn',
+    score: 5,
+    color: '#00F298',
+    star: '⚪',
+    badge: '⚪ Ổn',
+    bg: 'rgba(0, 242, 152, 0.12)',
+    border: 'rgba(0, 242, 152, 0.35)',
+    desc: 'Khả năng cơ bản, đá ở mức ổn'
   }
 };
 
 export const RATING_SCORES = {
   S: 10,
   A: 6,
-  B: 3
+  B: 3,
+  'Ổn': 5
 };
+
+/**
+ * Derive player's primary role and rating from their capability matrix
+ */
+export function derivePlayerAttributes(skills = {}) {
+  const tierWeight = { 'S': 4, 'A': 3, 'B': 2, 'Ổn': 1 };
+  
+  const picks = Object.entries(skills).filter(([_, val]) => val && val !== 'Ổn');
+  
+  // Sort picks by tier weight descending (S > A > B)
+  picks.sort((a, b) => (tierWeight[b[1]] || 1) - (tierWeight[a[1]] || 1));
+
+  let primaryPos = 'MF';
+  let primaryRating = 'Ổn';
+
+  if (picks.length > 0) {
+    primaryPos = picks[0][0]; // highest rated position
+    primaryRating = picks[0][1];
+  }
+
+  const strongPositions = picks.map(p => `${p[0]}-${p[1]}`);
+
+  return {
+    primaryPosition: primaryPos,
+    primaryRating: primaryRating,
+    strongPositions,
+    picks
+  };
+}
 
 /**
  * Calculate team statistics (total score, tier counts, position counts)
@@ -93,15 +135,22 @@ export function calculateTeamStats(teamPlayers = []) {
   const stats = {
     count: teamPlayers.length,
     totalScore: 0,
-    ratings: { S: 0, A: 0, B: 0 },
+    ratings: { S: 0, A: 0, B: 0, 'Ổn': 0 },
     positions: { GK: 0, DF: 0, MF: 0, FW: 0 }
   };
 
   teamPlayers.forEach(p => {
-    const r = p.rating && RATINGS[p.rating] ? p.rating : 'A';
-    const pos = p.position && POSITIONS[p.position] ? p.position : 'MF';
+    let r = p.rating;
+    let pos = p.position;
+    if (p.skills && typeof p.skills === 'object') {
+      const derived = derivePlayerAttributes(p.skills);
+      if (!pos || pos === 'MF') pos = derived.primaryPosition;
+      if (!r) r = derived.primaryRating;
+    }
+    r = r && RATINGS[r] ? r : 'Ổn';
+    pos = pos && POSITIONS[pos] ? pos : 'MF';
 
-    stats.totalScore += RATING_SCORES[r] || 6;
+    stats.totalScore += RATING_SCORES[r] || 5;
     stats.ratings[r] = (stats.ratings[r] || 0) + 1;
     stats.positions[pos] = (stats.positions[pos] || 0) + 1;
   });
@@ -118,11 +167,20 @@ export function balanceTeams(players, teamCount = 2) {
   const count = Number(teamCount) || 2;
 
   // 1. Clone and normalize player attributes
-  const pool = players.map(p => ({
-    ...p,
-    position: (p.position && ['FW', 'MF', 'DF', 'GK'].includes(p.position)) ? p.position : 'MF',
-    rating: (p.rating && ['S', 'A', 'B'].includes(p.rating)) ? p.rating : 'A'
-  }));
+  const pool = players.map(p => {
+    let position = p.position;
+    let rating = p.rating;
+    if (p.skills && typeof p.skills === 'object') {
+      const derived = derivePlayerAttributes(p.skills);
+      if (!position || position === 'MF') position = derived.primaryPosition;
+      if (!rating) rating = derived.primaryRating;
+    }
+    return {
+      ...p,
+      position: (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) ? position : 'MF',
+      rating: (rating && ['S', 'A', 'B', 'Ổn'].includes(rating)) ? rating : 'Ổn'
+    };
+  });
 
   // Shuffle pool with Fisher-Yates so identical tier+position players get randomized pairings
   for (let i = pool.length - 1; i > 0; i--) {
@@ -141,7 +199,7 @@ export function balanceTeams(players, teamCount = 2) {
   const assign = (team, player) => {
     team.players.push(player);
     player.team = team.id;
-    team.score += (RATING_SCORES[player.rating] || 6);
+    team.score += (RATING_SCORES[player.rating] || 5);
     team.positions[player.position] = (team.positions[player.position] || 0) + 1;
   };
 
@@ -152,8 +210,8 @@ export function balanceTeams(players, teamCount = 2) {
   const mfs = pool.filter(p => p.position === 'MF');
 
   const distributeGroup = (list) => {
-    // Sort players in this position by rating descending (S -> A -> B)
-    list.sort((a, b) => (RATING_SCORES[b.rating] || 6) - (RATING_SCORES[a.rating] || 6));
+    // Sort players in this position by rating descending (S -> A -> Ổn -> B)
+    list.sort((a, b) => (RATING_SCORES[b.rating] || 5) - (RATING_SCORES[a.rating] || 5));
 
     for (const player of list) {
       // Find the team with:

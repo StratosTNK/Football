@@ -113,17 +113,39 @@ function verifyAdmin(request, state) {
   return token === state.adminPassword;
 }
 
-const RATING_SCORES = { S: 10, A: 6, B: 3 };
+const RATING_SCORES = { S: 10, A: 6, B: 3, 'Ổn': 5 };
+
+function derivePlayerAttributes(skills = {}) {
+  const tierWeight = { 'S': 4, 'A': 3, 'B': 2, 'Ổn': 1 };
+  const picks = Object.entries(skills).filter(([_, val]) => val && val !== 'Ổn');
+  picks.sort((a, b) => (tierWeight[b[1]] || 1) - (tierWeight[a[1]] || 1));
+  let primaryPos = 'MF';
+  let primaryRating = 'Ổn';
+  if (picks.length > 0) {
+    primaryPos = picks[0][0];
+    primaryRating = picks[0][1];
+  }
+  return { primaryPosition: primaryPos, primaryRating };
+}
 
 function balanceTeams(players, teamCount = 2) {
   if (!players || players.length < 2) return players || [];
   const count = Number(teamCount) || 2;
 
-  const pool = players.map(p => ({
-    ...p,
-    position: (p.position && ['FW', 'MF', 'DF', 'GK'].includes(p.position)) ? p.position : 'MF',
-    rating: (p.rating && ['S', 'A', 'B'].includes(p.rating)) ? p.rating : 'A'
-  }));
+  const pool = players.map(p => {
+    let position = p.position;
+    let rating = p.rating;
+    if (p.skills && typeof p.skills === 'object') {
+      const derived = derivePlayerAttributes(p.skills);
+      if (!position || position === 'MF') position = derived.primaryPosition;
+      if (!rating) rating = derived.primaryRating;
+    }
+    return {
+      ...p,
+      position: (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) ? position : 'MF',
+      rating: (rating && ['S', 'A', 'B', 'Ổn'].includes(rating)) ? rating : 'Ổn'
+    };
+  });
 
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -140,7 +162,7 @@ function balanceTeams(players, teamCount = 2) {
   const assign = (team, player) => {
     team.players.push(player);
     player.team = team.id;
-    team.score += (RATING_SCORES[player.rating] || 6);
+    team.score += (RATING_SCORES[player.rating] || 5);
     team.positions[player.position] = (team.positions[player.position] || 0) + 1;
   };
 
@@ -262,7 +284,7 @@ export async function onRequest(context) {
     // 2. POST /api/player/join
     if (method === 'POST' && pathname === '/api/player/join') {
       const body = await getBody();
-      const { name, note, position, rating } = body;
+      const { name, note, position, rating, skills } = body;
       if (!name || !name.trim()) {
         return new Response(JSON.stringify({ success: false, message: 'Vui lòng nhập tên của bạn!' }), { status: 400, headers: corsHeaders });
       }
@@ -278,10 +300,10 @@ export async function onRequest(context) {
       }
 
       const validPositions = ['FW', 'MF', 'DF', 'GK'];
-      const validRatings = ['S', 'A', 'B'];
+      const validRatings = ['S', 'A', 'B', 'Ổn'];
 
       const pos = validPositions.includes(position) ? position : 'MF';
-      const rat = validRatings.includes(rating) ? rating : 'A';
+      const rat = validRatings.includes(rating) ? rating : 'Ổn';
 
       const newPlayer = {
         id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
@@ -289,6 +311,7 @@ export async function onRequest(context) {
         note: note ? note.trim() : '',
         position: pos,
         rating: rat,
+        skills: (skills && typeof skills === 'object') ? skills : { FW: 'Ổn', MF: 'Ổn', DF: 'Ổn', GK: 'Ổn' },
         team: 0,
         createdAt: new Date().toISOString()
       };
@@ -296,7 +319,7 @@ export async function onRequest(context) {
       state.players.push(newPlayer);
       await putState(env, state);
 
-      return new Response(JSON.stringify({ success: true, player: newPlayer }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ success: true, player: newPlayer, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
     // 3. POST /api/player/leave
@@ -432,7 +455,7 @@ export async function onRequest(context) {
       }
 
       const body = await getBody();
-      const { playerId, name, position, rating } = body;
+      const { playerId, name, position, rating, skills } = body;
       const player = state.players.find(p => p.id === playerId);
       if (!player) {
         return new Response(JSON.stringify({ success: false, message: 'Không tìm thấy cầu thủ!' }), { status: 404, headers: corsHeaders });
@@ -441,10 +464,16 @@ export async function onRequest(context) {
       if (name && name.trim()) {
         player.name = name.trim();
       }
+      if (skills && typeof skills === 'object') {
+        player.skills = skills;
+        const derived = derivePlayerAttributes(skills);
+        if (!position) player.position = derived.primaryPosition;
+        if (!rating) player.rating = derived.primaryRating;
+      }
       if (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) {
         player.position = position;
       }
-      if (rating && ['S', 'A', 'B'].includes(rating)) {
+      if (rating && ['S', 'A', 'B', 'Ổn'].includes(rating)) {
         player.rating = rating;
       }
 
