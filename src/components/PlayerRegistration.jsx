@@ -319,21 +319,22 @@ export default function PlayerRegistration({
                 <div style={{ position: 'relative' }}>
                   <div style={{
                     position: 'absolute',
-                    left: '14px',
+                    left: '13px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    color: showError ? '#FF4757' : (hasName ? '#00F298' : '#64748B'),
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     pointerEvents: 'none',
-                    transition: 'color 0.2s ease'
+                    fontSize: '1rem',
+                    lineHeight: 1
                   }}>
-                    <User size={16} />
+                    ✍️
                   </div>
 
                   <input 
                     type="text"
-                    placeholder="VD: Nguyễn Văn Khoa, Tuấn Đỗ..."
+                    placeholder="Nhập tên..."
                     value={name}
                     onChange={(e) => {
                       setName(e.target.value);
