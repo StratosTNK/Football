@@ -11,8 +11,7 @@ import {
   Phone,
   ExternalLink,
   Navigation,
-  FileText,
-  Users2
+  FileText
 } from 'lucide-react';
 import { DANANG_PITCHES, getGoogleMapsSearchUrl } from '../data/daNangPitches';
 
@@ -35,7 +34,6 @@ export default function AdminPanel({
   const [matchDate, setMatchDate] = useState(match?.matchDate || '');
   const [matchTime, setMatchTime] = useState(match?.matchTime || '');
   const [maxPlayers, setMaxPlayers] = useState(match?.maxPlayers || 14);
-  const [teamCount, setTeamCount] = useState(match?.teamCount || 2);
   const [notes, setNotes] = useState(match?.notes || '');
   const [status, setStatus] = useState(match?.status || 'OPEN');
   const [saving, setSaving] = useState(false);
@@ -57,7 +55,6 @@ export default function AdminPanel({
         setMatchDate(match.matchDate || '');
         setMatchTime(match.matchTime || '');
         setMaxPlayers(match.maxPlayers || 14);
-        setTeamCount(match.teamCount || 2);
         setNotes(match.notes || '');
         setStatus(match.status || 'OPEN');
         isInitializedRef.current = true;
@@ -104,7 +101,6 @@ export default function AdminPanel({
         matchDate,
         matchTime: matchTime.trim(),
         maxPlayers: Number(maxPlayers) || 14,
-        teamCount: Number(teamCount) || 2,
         notes: notes.trim(),
         status
       });
@@ -423,48 +419,6 @@ export default function AdminPanel({
                 onChange={(e) => setLocation(e.target.value)} 
                 placeholder="VD: 44 Dũng Sĩ Thanh Khê, Đà Nẵng" 
               />
-            </div>
-
-            {/* Chế độ chia đội */}
-            <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                <Users2 size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                Chế độ phân đội thi đấu:
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setTeamCount(2)}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    border: Number(teamCount) === 2 ? '1px solid var(--emerald)' : '1px solid rgba(255,255,255,0.1)',
-                    background: Number(teamCount) === 2 ? 'rgba(0, 242, 152, 0.15)' : 'rgba(255,255,255,0.03)',
-                    color: Number(teamCount) === 2 ? 'var(--emerald)' : '#94A3B8',
-                    fontSize: '0.82rem',
-                    fontWeight: Number(teamCount) === 2 ? 700 : 500,
-                    cursor: 'pointer'
-                  }}
-                >
-                  🔴 2 Đội (Đỏ vs Xanh)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTeamCount(3)}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    border: Number(teamCount) === 3 ? '1px solid #FBBF24' : '1px solid rgba(255,255,255,0.1)',
-                    background: Number(teamCount) === 3 ? 'rgba(251, 191, 36, 0.15)' : 'rgba(255,255,255,0.03)',
-                    color: Number(teamCount) === 3 ? '#FBBF24' : '#94A3B8',
-                    fontSize: '0.82rem',
-                    fontWeight: Number(teamCount) === 3 ? 700 : 500,
-                    cursor: 'pointer'
-                  }}
-                >
-                  🟡 3 Đội (Xoay vòng)
-                </button>
-              </div>
             </div>
 
             {/* Ghi chú trận đấu */}
