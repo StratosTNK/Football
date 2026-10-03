@@ -50,8 +50,8 @@ export const RATINGS = {
     color: '#FFD700',
     star: '⭐',
     badge: '⭐ S',
-    bg: 'linear-gradient(135deg, rgba(255, 215, 0, 0.22), rgba(255, 165, 0, 0.22))',
-    border: '#FFD700',
+    bg: 'rgba(255, 215, 0, 0.12)',
+    border: 'rgba(255, 215, 0, 0.35)',
     desc: 'Đá hay, công thủ toàn diện'
   },
   A: {
@@ -62,8 +62,8 @@ export const RATINGS = {
     color: '#A78BFA',
     star: '⚡',
     badge: '⚡ A',
-    bg: 'rgba(167, 139, 250, 0.18)',
-    border: '#A78BFA',
+    bg: 'rgba(167, 139, 250, 0.12)',
+    border: 'rgba(167, 139, 250, 0.35)',
     desc: 'Biết đá và mạnh 1 sở trường'
   },
   B: {
@@ -71,11 +71,11 @@ export const RATINGS = {
     name: 'Hạng B',
     label: 'Biết nhưng chưa tốt',
     score: 3,
-    color: '#94A3B8',
+    color: '#2DD4BF',
     star: '🟢',
     badge: '🟢 B',
-    bg: 'rgba(148, 163, 184, 0.15)',
-    border: '#64748B',
+    bg: 'rgba(45, 212, 191, 0.12)',
+    border: 'rgba(45, 212, 191, 0.35)',
     desc: 'Biết nhưng đá chưa tốt'
   }
 };

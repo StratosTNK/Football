@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
 import { POSITIONS, RATINGS } from '../utils/teamBalancer';
-import { UserPlus, X, Check, AlertCircle } from 'lucide-react';
+import { 
+  UserPlus, 
+  X, 
+  Check, 
+  AlertCircle, 
+  User, 
+  Crosshair, 
+  Activity, 
+  Shield, 
+  Hand, 
+  Crown, 
+  Zap, 
+  Lock, 
+  MessageSquare,
+  Sparkles,
+  UserCheck
+} from 'lucide-react';
 
 export default function PlayerRegistration({ 
   status, 
@@ -42,7 +58,7 @@ export default function PlayerRegistration({
 
         setName('');
         setNote('');
-        setIsOpen(false); // Automatically close modal after joining
+        setIsOpen(false);
 
         const posInfo = POSITIONS[res.player.position] || POSITIONS.MF;
         const ratInfo = RATINGS[res.player.rating] || RATINGS.A;
@@ -56,6 +72,91 @@ export default function PlayerRegistration({
   };
 
   const isLocked = status === 'LOCKED';
+  const hasName = Boolean(name.trim());
+
+  // Role visual configuration
+  const ROLE_CONFIGS = {
+    FW: {
+      id: 'FW',
+      label: 'Tiền đạo',
+      desc: 'Dứt điểm, tấn công',
+      color: '#FF4757',
+      gradient: 'linear-gradient(145deg, rgba(255, 71, 87, 0.22) 0%, rgba(220, 38, 38, 0.06) 100%)',
+      borderActive: '#FF4757',
+      glow: 'rgba(255, 71, 87, 0.3)',
+      icon: <Crosshair size={20} strokeWidth={2.3} />
+    },
+    MF: {
+      id: 'MF',
+      label: 'Tiền vệ',
+      desc: 'Kiến thiết, điều tiết',
+      color: '#00F298',
+      gradient: 'linear-gradient(145deg, rgba(0, 242, 152, 0.22) 0%, rgba(5, 150, 105, 0.06) 100%)',
+      borderActive: '#00F298',
+      glow: 'rgba(0, 242, 152, 0.3)',
+      icon: <Activity size={20} strokeWidth={2.3} />
+    },
+    DF: {
+      id: 'DF',
+      label: 'Hậu vệ',
+      desc: 'Đánh chặn, phòng thủ',
+      color: '#38BDF8',
+      gradient: 'linear-gradient(145deg, rgba(56, 189, 248, 0.22) 0%, rgba(37, 99, 235, 0.06) 100%)',
+      borderActive: '#38BDF8',
+      glow: 'rgba(56, 189, 248, 0.3)',
+      icon: <Shield size={20} strokeWidth={2.3} />
+    },
+    GK: {
+      id: 'GK',
+      label: 'Thủ môn',
+      desc: 'Gác đền, phản xạ',
+      color: '#F59E0B',
+      gradient: 'linear-gradient(145deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.06) 100%)',
+      borderActive: '#F59E0B',
+      glow: 'rgba(245, 158, 11, 0.3)',
+      icon: <Hand size={20} strokeWidth={2.3} />
+    }
+  };
+
+  // Tier visual configuration
+  const TIER_CONFIGS = {
+    S: {
+      id: 'S',
+      title: 'Hạng S',
+      badgeText: 'TOP TIER',
+      desc: 'Đá hay • Công thủ toàn diện',
+      color: '#FFD700',
+      gradient: 'linear-gradient(145deg, rgba(255, 215, 0, 0.18) 0%, rgba(200, 140, 10, 0.05) 100%)',
+      borderActive: '#FFD700',
+      glow: 'rgba(255, 215, 0, 0.25)',
+      icon: <Crown size={19} color="#FFD700" strokeWidth={2.2} />
+    },
+    A: {
+      id: 'A',
+      title: 'Hạng A',
+      badgeText: 'CORE TIER',
+      desc: 'Biết đá • Mạnh 1 sở trường',
+      color: '#A78BFA',
+      gradient: 'linear-gradient(145deg, rgba(167, 139, 250, 0.18) 0%, rgba(124, 58, 237, 0.05) 100%)',
+      borderActive: '#A78BFA',
+      glow: 'rgba(167, 139, 250, 0.25)',
+      icon: <Zap size={19} color="#A78BFA" strokeWidth={2.2} />
+    },
+    B: {
+      id: 'B',
+      title: 'Hạng B',
+      badgeText: 'CLUB TIER',
+      desc: 'Biết đá • Đang rèn luyện',
+      color: '#2DD4BF',
+      gradient: 'linear-gradient(145deg, rgba(45, 212, 191, 0.16) 0%, rgba(13, 148, 136, 0.05) 100%)',
+      borderActive: '#2DD4BF',
+      glow: 'rgba(45, 212, 191, 0.25)',
+      icon: <Shield size={19} color="#2DD4BF" strokeWidth={2.2} />
+    }
+  };
+
+  const currentRole = ROLE_CONFIGS[position] || ROLE_CONFIGS.MF;
+  const currentTier = TIER_CONFIGS[rating] || TIER_CONFIGS.A;
 
   return (
     <div style={{ marginBottom: '16px' }}>
@@ -68,44 +169,67 @@ export default function PlayerRegistration({
         className="btn"
         style={{
           width: '100%',
-          padding: '14px 18px',
-          borderRadius: 'var(--radius-md)',
+          padding: '14px 20px',
+          borderRadius: '16px',
           background: isLocked 
-            ? 'rgba(255, 255, 255, 0.05)' 
-            : 'linear-gradient(135deg, #00F298 0%, #00C875 100%)',
-          color: isLocked ? '#FF6B81' : '#03140C',
-          border: isLocked ? '1px dashed rgba(255, 107, 129, 0.4)' : 'none',
-          boxShadow: isLocked ? 'none' : '0 4px 20px rgba(0, 242, 152, 0.35)',
+            ? 'rgba(255, 255, 255, 0.04)' 
+            : 'linear-gradient(135deg, #00F298 0%, #00B96B 100%)',
+          color: isLocked ? '#FF6B81' : '#04160E',
+          border: isLocked 
+            ? '1px dashed rgba(255, 107, 129, 0.35)' 
+            : '1px solid rgba(255, 255, 255, 0.25)',
+          boxShadow: isLocked 
+            ? 'none' 
+            : '0 8px 28px -4px rgba(0, 242, 152, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
           cursor: isLocked ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '1.4rem' }}>{isLocked ? '🔒' : '⚽'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '12px',
+            background: isLocked ? 'rgba(255, 71, 87, 0.12)' : 'rgba(0, 0, 0, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.25rem',
+            boxShadow: isLocked ? 'none' : 'inset 0 1px 1px rgba(255,255,255,0.2)'
+          }}>
+            {isLocked ? '🔒' : '⚽'}
+          </div>
+
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+            <div style={{ 
+              fontSize: '1.05rem', 
+              fontWeight: 800, 
+              letterSpacing: '0.03em', 
+              textTransform: 'uppercase',
+              lineHeight: 1.2
+            }}>
               {isLocked ? 'KÈO ĐÃ KHÓA ĐĂNG KÝ' : 'THAM GIA'}
             </div>
-            <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 600 }}>
-              {isLocked ? 'Chốt sổ danh sách trận đấu' : 'Bấm vào để chọn vị trí & trình độ thi đấu'}
+            <div style={{ fontSize: '0.74rem', opacity: isLocked ? 0.75 : 0.85, fontWeight: 600, marginTop: '2px' }}>
+              {isLocked ? 'Đã chốt danh sách thi đấu' : 'Bấm để chọn vị trí & trình độ thi đấu'}
             </div>
           </div>
         </div>
 
         {!isLocked && (
           <div style={{
-            background: 'rgba(0, 0, 0, 0.22)',
-            padding: '6px 14px',
-            borderRadius: '20px',
-            fontSize: '0.8rem',
+            background: 'rgba(0, 0, 0, 0.25)',
+            padding: '7px 16px',
+            borderRadius: '24px',
+            fontSize: '0.82rem',
             fontWeight: 800,
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2)'
+            boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.18)'
           }}>
             <UserPlus size={15} />
             <span>Đăng Ký →</span>
@@ -118,42 +242,59 @@ export default function PlayerRegistration({
         <div 
           className="modal-overlay" 
           onClick={() => !loading && setIsOpen(false)}
-          style={{ animation: 'fadeIn 0.2s ease' }}
+          style={{ 
+            animation: 'fadeIn 0.2s ease',
+            background: 'rgba(3, 7, 13, 0.85)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 999
+          }}
         >
           <div 
             className="modal-content" 
             onClick={(e) => e.stopPropagation()} 
             style={{ 
-              maxWidth: '460px', 
+              maxWidth: '480px', 
               width: '94%',
-              padding: '18px 20px',
-              animation: 'modalSlideUp 0.2s ease',
-              border: '1px solid rgba(0, 242, 152, 0.3)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)'
+              padding: '22px 24px',
+              animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+              borderRadius: '20px',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)'
             }}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: '18px', 
+              paddingBottom: '14px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.07)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  background: 'rgba(0, 242, 152, 0.15)',
-                  color: 'var(--emerald)',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(0, 242, 152, 0.2) 0%, rgba(0, 185, 107, 0.08) 100%)',
+                  border: '1px solid rgba(0, 242, 152, 0.35)',
+                  color: '#00F298',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.1rem'
+                  boxShadow: '0 4px 14px rgba(0, 242, 152, 0.18)'
                 }}>
-                  ⚽
+                  <Sparkles size={19} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
                     Điểm Danh Tham Gia Kèo
                   </h3>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    Điền đầy đủ thông tin để chia đội công bằng
+                  <div style={{ fontSize: '0.74rem', color: '#94A3B8', marginTop: '2px' }}>
+                    Chọn vị trí & trình độ để thuật toán xếp đội công bằng
                   </div>
                 </div>
               </div>
@@ -162,65 +303,124 @@ export default function PlayerRegistration({
                 type="button"
                 onClick={() => !loading && setIsOpen(false)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.09)',
+                  color: '#94A3B8',
                   cursor: 'pointer',
-                  padding: '4px',
-                  borderRadius: '6px'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             {/* Registration Form */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              
               {/* Field 1: Name (Required) */}
               <div>
-                <label style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-                  Họ và tên cầu thủ: <span style={{ color: '#FF4757' }}>*</span>
-                </label>
-                <input 
-                  type="text"
-                  className="clean-input"
-                  placeholder="VD: Nguyễn Văn Khoa, Tuấn Đỗ..."
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (showError && e.target.value.trim()) setShowError(false);
-                  }}
-                  maxLength={40}
-                  required
-                  autoFocus
-                  disabled={loading}
-                  style={{ 
-                    fontSize: '0.92rem', 
-                    padding: '10px 12px',
-                    borderColor: showError ? '#FF4757' : undefined 
-                  }}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.82rem', color: '#E2E8F0', fontWeight: 700, margin: 0 }}>
+                    Họ và tên cầu thủ: <span style={{ color: '#FF4757' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                    Bắt buộc
+                  </span>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: showError ? '#FF4757' : (hasName ? '#00F298' : '#64748B'),
+                    display: 'flex',
+                    alignItems: 'center',
+                    pointerEvents: 'none',
+                    transition: 'color 0.2s ease'
+                  }}>
+                    <User size={17} />
+                  </div>
+
+                  <input 
+                    type="text"
+                    placeholder="VD: Nguyễn Văn Khoa, Tuấn Đỗ..."
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (showError && e.target.value.trim()) setShowError(false);
+                    }}
+                    maxLength={40}
+                    required
+                    autoFocus
+                    disabled={loading}
+                    style={{ 
+                      width: '100%',
+                      background: 'rgba(13, 21, 33, 0.85)',
+                      border: showError 
+                        ? '1.5px solid #FF4757' 
+                        : (hasName ? '1px solid rgba(0, 242, 152, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)'),
+                      borderRadius: '12px',
+                      padding: '12px 14px 12px 40px',
+                      color: '#FFFFFF',
+                      fontSize: '0.94rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      boxShadow: showError 
+                        ? '0 0 0 3px rgba(255, 71, 87, 0.15)' 
+                        : (hasName ? '0 0 0 3px rgba(0, 242, 152, 0.1)' : 'inset 0 2px 4px rgba(0,0,0,0.3)'),
+                      transition: 'all 0.2s ease'
+                    }}
+                  />
+                </div>
+
                 {showError && (
-                  <div style={{ fontSize: '0.74rem', color: '#FF4757', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <AlertCircle size={12} />
-                    <span>Bạn bắt buộc phải nhập tên cầu thủ để tham gia!</span>
+                  <div style={{ 
+                    fontSize: '0.74rem', 
+                    color: '#FF6B81', 
+                    marginTop: '6px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '5px',
+                    background: 'rgba(255, 71, 87, 0.08)',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 71, 87, 0.2)'
+                  }}>
+                    <AlertCircle size={13} />
+                    <span>Bạn bắt buộc phải nhập họ tên để xác nhận tham gia!</span>
                   </div>
                 )}
               </div>
 
-              {/* Field 2: Position Selector (Required) */}
+              {/* Field 2: Position Selector */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 700, margin: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.82rem', color: '#E2E8F0', fontWeight: 700, margin: 0 }}>
                     Vị trí sở trường: <span style={{ color: '#FF4757' }}>*</span>
                   </label>
-                  <span style={{ fontSize: '0.74rem', color: POSITIONS[position]?.color, fontWeight: 700 }}>
-                    {POSITIONS[position]?.icon} {POSITIONS[position]?.name}
+                  <span style={{ 
+                    fontSize: '0.74rem', 
+                    color: currentRole.color, 
+                    fontWeight: 700,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    padding: '3px 10px',
+                    borderRadius: '12px',
+                    border: `1px solid ${currentRole.color}40`
+                  }}>
+                    {currentRole.id} • {currentRole.label}
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-                  {Object.values(POSITIONS).map((pos) => {
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                  {Object.values(ROLE_CONFIGS).map((pos) => {
                     const isSelected = position === pos.id;
                     return (
                       <button
@@ -228,25 +428,46 @@ export default function PlayerRegistration({
                         type="button"
                         onClick={() => setPosition(pos.id)}
                         style={{
-                          padding: '8px 4px',
-                          borderRadius: '8px',
-                          border: isSelected ? `2px solid ${pos.color}` : '1px solid rgba(255, 255, 255, 0.1)',
-                          background: isSelected ? pos.badgeBg : 'rgba(255, 255, 255, 0.03)',
-                          color: '#fff',
+                          padding: '10px 4px',
+                          borderRadius: '12px',
+                          border: isSelected 
+                            ? `1.5px solid ${pos.borderActive}` 
+                            : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected 
+                            ? pos.gradient 
+                            : 'rgba(255, 255, 255, 0.025)',
+                          color: '#FFFFFF',
                           cursor: 'pointer',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          gap: '2px',
-                          transition: 'all 0.15s ease'
+                          gap: '4px',
+                          boxShadow: isSelected 
+                            ? `0 6px 18px ${pos.glow}, inset 0 1px 0 rgba(255,255,255,0.2)` 
+                            : 'none',
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       >
-                        <span style={{ fontSize: '1.15rem' }}>{pos.icon}</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: isSelected ? pos.color : '#fff' }}>
+                        <div style={{ 
+                          color: isSelected ? pos.color : '#94A3B8',
+                          transition: 'color 0.15s ease' 
+                        }}>
+                          {pos.icon}
+                        </div>
+                        <span style={{ 
+                          fontSize: '0.86rem', 
+                          fontWeight: 800, 
+                          color: isSelected ? pos.color : '#FFFFFF',
+                          letterSpacing: '0.02em'
+                        }}>
                           {pos.id}
                         </span>
-                        <span style={{ fontSize: '0.65rem', color: isSelected ? '#fff' : 'var(--text-muted)' }}>
-                          {pos.shortLabel}
+                        <span style={{ 
+                          fontSize: '0.67rem', 
+                          color: isSelected ? '#E2E8F0' : '#64748B',
+                          fontWeight: isSelected ? 600 : 500
+                        }}>
+                          {pos.label}
                         </span>
                       </button>
                     );
@@ -254,19 +475,27 @@ export default function PlayerRegistration({
                 </div>
               </div>
 
-              {/* Field 3: Rating Tier Selector (Required) */}
+              {/* Field 3: Rating Tier Selector */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 700, margin: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.82rem', color: '#E2E8F0', fontWeight: 700, margin: 0 }}>
                     Mức đánh giá khả năng: <span style={{ color: '#FF4757' }}>*</span>
                   </label>
-                  <span style={{ fontSize: '0.74rem', color: RATINGS[rating]?.color, fontWeight: 700 }}>
-                    {RATINGS[rating]?.label}
+                  <span style={{ 
+                    fontSize: '0.74rem', 
+                    color: currentTier.color, 
+                    fontWeight: 700,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    padding: '3px 10px',
+                    borderRadius: '12px',
+                    border: `1px solid ${currentTier.color}40`
+                  }}>
+                    {currentTier.desc}
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                  {Object.values(RATINGS).map((rat) => {
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {Object.values(TIER_CONFIGS).map((rat) => {
                     const isSelected = rating === rat.id;
                     return (
                       <button
@@ -274,26 +503,44 @@ export default function PlayerRegistration({
                         type="button"
                         onClick={() => setRating(rat.id)}
                         style={{
-                          padding: '8px 6px',
-                          borderRadius: '8px',
-                          border: isSelected ? `2px solid ${rat.border}` : '1px solid rgba(255, 255, 255, 0.1)',
-                          background: isSelected ? rat.bg : 'rgba(255, 255, 255, 0.03)',
-                          color: '#fff',
+                          padding: '12px 8px 10px 8px',
+                          borderRadius: '14px',
+                          border: isSelected 
+                            ? `1.5px solid ${rat.borderActive}` 
+                            : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected 
+                            ? rat.gradient 
+                            : 'rgba(255, 255, 255, 0.025)',
+                          color: '#FFFFFF',
                           cursor: 'pointer',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          gap: '2px',
+                          gap: '4px',
                           textAlign: 'center',
-                          transition: 'all 0.15s ease',
-                          boxShadow: isSelected && rat.id === 'S' ? '0 0 10px rgba(255, 215, 0, 0.35)' : 'none'
+                          boxShadow: isSelected 
+                            ? `0 8px 24px ${rat.glow}, inset 0 1px 0 rgba(255,255,255,0.25)` 
+                            : 'none',
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                         }}
                       >
-                        <span style={{ fontSize: '1.1rem' }}>{rat.star}</span>
-                        <span style={{ fontSize: '0.84rem', fontWeight: 800, color: isSelected ? rat.color : '#fff' }}>
-                          Hạng {rat.id}
+                        <div style={{ marginBottom: '2px' }}>
+                          {rat.icon}
+                        </div>
+                        <span style={{ 
+                          fontSize: '0.88rem', 
+                          fontWeight: 800, 
+                          color: isSelected ? rat.color : '#FFFFFF',
+                          letterSpacing: '0.01em'
+                        }}>
+                          {rat.title}
                         </span>
-                        <span style={{ fontSize: '0.64rem', color: isSelected ? '#fff' : 'var(--text-muted)', lineHeight: 1.2 }}>
+                        <span style={{ 
+                          fontSize: '0.67rem', 
+                          color: isSelected ? '#F1F5F9' : '#64748B', 
+                          lineHeight: 1.25,
+                          fontWeight: isSelected ? 600 : 400
+                        }}>
                           {rat.desc}
                         </span>
                       </button>
@@ -304,60 +551,125 @@ export default function PlayerRegistration({
 
               {/* Field 4: Note (Optional) */}
               <div>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.78rem', color: '#94A3B8', display: 'block', marginBottom: '6px' }}>
                   Ghi chú thêm (không bắt buộc):
                 </label>
-                <input 
-                  type="text"
-                  className="clean-input"
-                  placeholder="VD: Đến trễ 10p, mang theo bạn..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  maxLength={60}
-                  disabled={loading}
-                  style={{ fontSize: '0.82rem', padding: '7px 10px' }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#64748B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    pointerEvents: 'none'
+                  }}>
+                    <MessageSquare size={15} />
+                  </div>
+                  <input 
+                    type="text"
+                    placeholder="VD: Đến trễ 10p, mang theo áo phụ..."
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    maxLength={60}
+                    disabled={loading}
+                    style={{ 
+                      width: '100%',
+                      background: 'rgba(13, 21, 33, 0.6)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '10px',
+                      padding: '9px 12px 9px 36px',
+                      color: '#E2E8F0',
+                      fontSize: '0.84rem',
+                      fontFamily: 'inherit',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   disabled={loading}
-                  className="btn btn-secondary"
-                  style={{ flex: 1, padding: '10px' }}
+                  style={{ 
+                    flex: 1, 
+                    padding: '12px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#CBD5E1',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
                 >
-                  Đóng
+                  <X size={15} />
+                  <span>Đóng</span>
                 </button>
 
                 <button
                   type="submit"
                   id="btn-confirm-join"
-                  disabled={loading || !name.trim()}
-                  className="btn btn-primary"
+                  disabled={loading || !hasName}
                   style={{ 
                     flex: 2, 
-                    padding: '11px', 
-                    fontSize: '0.92rem', 
+                    padding: '12px', 
+                    borderRadius: '12px',
+                    fontSize: '0.94rem', 
                     fontWeight: 800,
-                    opacity: !name.trim() ? 0.45 : 1,
-                    cursor: !name.trim() ? 'not-allowed' : 'pointer',
-                    boxShadow: !name.trim() ? 'none' : '0 4px 16px rgba(0, 242, 152, 0.35)'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    ...(hasName ? {
+                      background: 'linear-gradient(135deg, #00F298 0%, #00B96B 100%)',
+                      color: '#03140C',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 6px 20px rgba(0, 242, 152, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                      cursor: 'pointer'
+                    } : {
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      color: '#64748B',
+                      border: '1px dashed rgba(255, 255, 255, 0.12)',
+                      boxShadow: 'none',
+                      cursor: 'not-allowed'
+                    })
                   }}
                 >
-                  {loading ? 'Đang gửi...' : 'Xác Nhận Tham Gia ⚽'}
+                  {loading ? (
+                    <span>Đang gửi...</span>
+                  ) : hasName ? (
+                    <>
+                      <UserCheck size={17} />
+                      <span>Xác Nhận Tham Gia ⚽</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={15} />
+                      <span>Nhập tên để tham gia</span>
+                    </>
+                  )}
                 </button>
               </div>
 
-              {!name.trim() && (
+              {!hasName && (
                 <div style={{ 
                   textAlign: 'center', 
                   fontSize: '0.72rem', 
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  marginTop: '-4px'
+                  color: '#64748B',
+                  marginTop: '-6px'
                 }}>
-                  ℹ️ Bạn cần điền họ tên bên trên để mở khóa nút tham gia
+                  * Vui lòng điền họ tên bên trên để mở khóa nút xác nhận
                 </div>
               )}
             </form>
@@ -367,3 +679,4 @@ export default function PlayerRegistration({
     </div>
   );
 }
+
