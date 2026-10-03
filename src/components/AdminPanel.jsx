@@ -9,9 +9,12 @@ import {
   AlertTriangle,
   MapPin,
   Phone,
-  ExternalLink
+  ExternalLink,
+  Navigation,
+  FileText,
+  Users2
 } from 'lucide-react';
-import { DANANG_PITCHES } from '../data/daNangPitches';
+import { DANANG_PITCHES, getGoogleMapsSearchUrl } from '../data/daNangPitches';
 
 export default function AdminPanel({ 
   isOpen, 
@@ -26,26 +29,34 @@ export default function AdminPanel({
   const [activeTab, setActiveTab] = useState('setup'); // 'setup' | 'security'
 
   // Match setup form state
-  const [title, setTitle] = useState(match.title || '');
-  const [stadium, setStadium] = useState(match.stadium || '');
-  const [location, setLocation] = useState(match.location || '');
-  const [matchDate, setMatchDate] = useState(match.matchDate || '');
-  const [matchTime, setMatchTime] = useState(match.matchTime || '');
-  const [maxPlayers, setMaxPlayers] = useState(match.maxPlayers || 14);
-  const [status, setStatus] = useState(match.status || 'OPEN');
+  const [title, setTitle] = useState(match?.title || '');
+  const [stadium, setStadium] = useState(match?.stadium || '');
+  const [location, setLocation] = useState(match?.location || '');
+  const [matchDate, setMatchDate] = useState(match?.matchDate || '');
+  const [matchTime, setMatchTime] = useState(match?.matchTime || '');
+  const [maxPlayers, setMaxPlayers] = useState(match?.maxPlayers || 14);
+  const [teamCount, setTeamCount] = useState(match?.teamCount || 2);
+  const [notes, setNotes] = useState(match?.notes || '');
+  const [status, setStatus] = useState(match?.status || 'OPEN');
+  const [saving, setSaving] = useState(false);
 
-  // Security
+  // Security state
   const [newPassword, setNewPassword] = useState('');
+  const [changingPass, setChangingPass] = useState(false);
 
   // Keep state synchronized with incoming match changes
   useEffect(() => {
-    setTitle(match.title || '');
-    setStadium(match.stadium || '');
-    setLocation(match.location || '');
-    setMatchDate(match.matchDate || '');
-    setMatchTime(match.matchTime || '');
-    setMaxPlayers(match.maxPlayers || 14);
-    setStatus(match.status || 'OPEN');
+    if (match) {
+      setTitle(match.title || '');
+      setStadium(match.stadium || '');
+      setLocation(match.location || '');
+      setMatchDate(match.matchDate || '');
+      setMatchTime(match.matchTime || '');
+      setMaxPlayers(match.maxPlayers || 14);
+      setTeamCount(match.teamCount || 2);
+      setNotes(match.notes || '');
+      setStatus(match.status || 'OPEN');
+    }
   }, [match]);
 
   // Find matched pitch in Da Nang database
@@ -76,35 +87,43 @@ export default function AdminPanel({
 
   const handleSaveSetup = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       await onUpdateMatch({
-        title,
-        stadium,
-        location,
+        title: title.trim(),
+        stadium: stadium.trim(),
+        location: location.trim(),
         matchDate,
-        matchTime,
-        maxPlayers,
-        status,
-        teamCount: match.teamCount || 2
+        matchTime: matchTime.trim(),
+        maxPlayers: Number(maxPlayers) || 14,
+        teamCount: Number(teamCount) || 2,
+        notes: notes.trim(),
+        status
       });
-      showToast('✅ Đã cập nhật thông tin kèo đá bóng!');
-    } catch {
-      showToast('Lỗi khi lưu thông tin kèo.');
+      showToast?.('✅ Đã lưu cài đặt kèo đá bóng thành công!');
+      onClose(); // Automatically close modal after saving
+    } catch (err) {
+      showToast?.('❌ ' + (err?.message || 'Lỗi khi lưu thông tin kèo.'));
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleChangePasswordClick = async (e) => {
     e.preventDefault();
-    if (!newPassword || newPassword.length < 4) {
-      showToast('Mật khẩu tối thiểu 4 ký tự!');
+    if (!newPassword || newPassword.trim().length < 4) {
+      showToast?.('Mật khẩu tối thiểu 4 ký tự!');
       return;
     }
+    setChangingPass(true);
     try {
-      await onChangePassword(newPassword);
+      await onChangePassword(newPassword.trim());
       setNewPassword('');
-      showToast('✅ Đã đổi mật khẩu Admin thành công!');
-    } catch {
-      showToast('Không thể đổi mật khẩu.');
+      showToast?.('✅ Đã đổi mật khẩu Admin thành công!');
+    } catch (err) {
+      showToast?.('❌ ' + (err?.message || 'Không thể đổi mật khẩu.'));
+    } finally {
+      setChangingPass(false);
     }
   };
 
@@ -112,16 +131,20 @@ export default function AdminPanel({
     if (window.confirm('⚠️ Bạn có chắc muốn XÓA TOÀN BỘ danh sách cầu thủ để chuẩn bị cho trận mới tuần sau?')) {
       try {
         await onClearPlayers();
-        showToast('Đã làm mới danh sách cầu thủ cho kèo mới!');
+        showToast?.('🧹 Đã làm mới danh sách cầu thủ cho kèo mới!');
       } catch {
-        showToast('Không thể làm mới danh sách.');
+        showToast?.('Lỗi khi làm mới danh sách.');
       }
     }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content admin-panel-modal" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
+      <div 
+        className="modal-content admin-panel-modal" 
+        style={{ maxWidth: '520px', maxHeight: '92vh', overflowY: 'auto' }} 
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Mobile Drag Pill */}
         <div className="modal-drag-pill"></div>
 
@@ -149,14 +172,14 @@ export default function AdminPanel({
             type="button"
             onClick={onClose} 
             className="btn-secondary" 
-            style={{ padding: '6px', borderRadius: '50%', color: 'var(--text-muted)' }}
+            style={{ padding: '6px', borderRadius: '50%', color: 'var(--text-muted)', border: 'none', background: 'rgba(255,255,255,0.06)', cursor: 'pointer' }}
           >
             <X size={17} />
           </button>
         </div>
 
         {/* 2-Column Responsive Tab Navigation */}
-        <div className="admin-tabs-grid">
+        <div className="admin-tabs-grid" style={{ marginBottom: '14px' }}>
           <button
             type="button"
             onClick={() => setActiveTab('setup')}
@@ -188,7 +211,7 @@ export default function AdminPanel({
                 className="clean-input" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)} 
-                placeholder="VD: Kèo Sân 7 Phúc Đạt Tối Thứ 5" 
+                placeholder="VD: Giao hữu giữa Thể Thao - Thanh Khê" 
                 required 
               />
             </div>
@@ -216,7 +239,7 @@ export default function AdminPanel({
                   className="clean-input" 
                   value={matchTime} 
                   onChange={(e) => setMatchTime(e.target.value)} 
-                  placeholder="19:30 - 21:00" 
+                  placeholder="20:00 - 21:00" 
                   required 
                 />
               </div>
@@ -266,7 +289,10 @@ export default function AdminPanel({
                 {onOpenPitchFinder && (
                   <button
                     type="button"
-                    onClick={onOpenPitchFinder}
+                    onClick={() => {
+                      onClose(); // Close AdminPanel first so modals don't collide
+                      onOpenPitchFinder();
+                    }}
                     className="btn btn-secondary"
                     style={{ padding: '3px 8px', fontSize: '0.72rem', color: 'var(--emerald)', borderColor: 'rgba(0, 242, 152, 0.4)' }}
                   >
@@ -284,16 +310,18 @@ export default function AdminPanel({
                 <option value="">-- Để trống sân bóng / Chưa chốt sân --</option>
                 {DANANG_PITCHES.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.name} (Hotline: {p.phone})
+                    [{p.district}] {p.name} - ĐT: {p.phone}
                   </option>
                 ))}
               </select>
 
+              {/* Matched pitch quick info */}
               {matchedPitch && (
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  flexWrap: 'wrap',
                   gap: '6px',
                   fontSize: '0.74rem',
                   color: '#CBD5E1',
@@ -305,7 +333,7 @@ export default function AdminPanel({
                     <Phone size={12} color="var(--emerald)" />
                     <span>Hotline: <strong style={{ color: '#fff' }}>{matchedPitch.phone}</strong></span>
                   </div>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
                     <a
                       href={`tel:${matchedPitch.phone.replace(/\s+/g, '')}`}
                       className="btn"
@@ -315,22 +343,31 @@ export default function AdminPanel({
                         background: 'var(--emerald)',
                         color: '#03140C',
                         fontWeight: 700,
-                        textDecoration: 'none'
+                        textDecoration: 'none',
+                        borderRadius: '4px'
                       }}
                     >
                       Gọi Sân
                     </a>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard?.writeText(matchedPitch.phone.replace(/\s+/g, ''));
-                        showToast(`📞 Đã chép số điện thoại ${matchedPitch.phone}`);
-                      }}
+                    <a
+                      href={matchedPitch.googleMapsUrl || getGoogleMapsSearchUrl(`Sân bóng đá ${matchedPitch.name}`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="btn btn-secondary"
-                      style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                      style={{
+                        padding: '2px 8px',
+                        fontSize: '0.7rem',
+                        color: '#38BDF8',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        borderRadius: '4px'
+                      }}
                     >
-                      Chép SĐT
-                    </button>
+                      <Navigation size={10} />
+                      <span>Bản đồ</span>
+                    </a>
                   </div>
                 </div>
               )}
@@ -339,7 +376,7 @@ export default function AdminPanel({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Tên sân bóng:
+                  Tên sân bóng (hoặc nhập tay):
                 </label>
                 <input 
                   type="text" 
@@ -360,26 +397,86 @@ export default function AdminPanel({
                   value={maxPlayers} 
                   onChange={(e) => setMaxPlayers(e.target.value)} 
                   placeholder="14" 
+                  min="2"
+                  max="100"
                 />
               </div>
             </div>
 
             <div>
               <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                Địa chỉ sân:
+                Địa chỉ sân thi đấu:
               </label>
               <input 
                 type="text" 
                 className="clean-input" 
                 value={location} 
                 onChange={(e) => setLocation(e.target.value)} 
-                placeholder="Để trống nếu chưa có địa chỉ" 
+                placeholder="VD: 44 Dũng Sĩ Thanh Khê, Đà Nẵng" 
+              />
+            </div>
+
+            {/* Chế độ chia đội */}
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <Users2 size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                Chế độ phân đội thi đấu:
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setTeamCount(2)}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: Number(teamCount) === 2 ? '1px solid var(--emerald)' : '1px solid rgba(255,255,255,0.1)',
+                    background: Number(teamCount) === 2 ? 'rgba(0, 242, 152, 0.15)' : 'rgba(255,255,255,0.03)',
+                    color: Number(teamCount) === 2 ? 'var(--emerald)' : '#94A3B8',
+                    fontSize: '0.82rem',
+                    fontWeight: Number(teamCount) === 2 ? 700 : 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔴 2 Đội (Đỏ vs Xanh)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTeamCount(3)}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: Number(teamCount) === 3 ? '1px solid #FBBF24' : '1px solid rgba(255,255,255,0.1)',
+                    background: Number(teamCount) === 3 ? 'rgba(251, 191, 36, 0.15)' : 'rgba(255,255,255,0.03)',
+                    color: Number(teamCount) === 3 ? '#FBBF24' : '#94A3B8',
+                    fontSize: '0.82rem',
+                    fontWeight: Number(teamCount) === 3 ? 700 : 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🟡 3 Đội (Xoay vòng)
+                </button>
+              </div>
+            </div>
+
+            {/* Ghi chú trận đấu */}
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <FileText size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                Ghi chú cho anh em (dặn dò, giày, tiền sân...):
+              </label>
+              <textarea
+                className="clean-input"
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="VD: Mang giày đinh dăm TF. Đến sớm 10 phút khởi động!"
+                style={{ resize: 'vertical', minHeight: '60px', fontSize: '0.84rem' }}
               />
             </div>
 
             <div>
               <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                Trạng thái đăng ký:
+                Trạng thái điểm danh:
               </label>
               <select
                 className="clean-input"
@@ -387,13 +484,25 @@ export default function AdminPanel({
                 onChange={(e) => setStatus(e.target.value)}
               >
                 <option value="OPEN">🟢 Mở đăng ký tự do</option>
-                <option value="LOCKED">🔴 Khóa đăng ký (Đã đủ người)</option>
+                <option value="LOCKED">🔴 Khóa đăng ký (Đã đủ người/Tạm ngưng)</option>
                 <option value="BALANCED">🔵 Đã chia đội</option>
               </select>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ padding: '12px', marginTop: '6px' }}>
-              <Check size={18} /> Lưu Cài Đặt Trận Đấu
+            <button 
+              type="submit" 
+              disabled={saving}
+              className="btn btn-primary" 
+              style={{ padding: '12px', marginTop: '6px', cursor: saving ? 'not-allowed' : 'pointer' }}
+            >
+              {saving ? (
+                <span>⏳ Đang lưu cài đặt...</span>
+              ) : (
+                <>
+                  <Check size={18} />
+                  <span>Lưu Cài Đặt Trận Đấu</span>
+                </>
+              )}
             </button>
           </form>
         )}
@@ -403,34 +512,50 @@ export default function AdminPanel({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Change Password */}
             <form onSubmit={handleChangePasswordClick} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>Đổi Mật Khẩu Admin</h4>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', margin: 0 }}>Đổi Mật Khẩu Admin</h4>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', margin: 0 }}>
+                Mật khẩu quản trị hiện tại được lưu an toàn. Nhập mật khẩu mới để thay đổi.
+              </p>
               <input 
                 type="password" 
                 className="clean-input" 
-                placeholder="Nhập mật khẩu Admin mới..." 
+                placeholder="Nhập mật khẩu Admin mới (tối thiểu 4 ký tự)..." 
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
+                required
               />
-              <button type="submit" className="btn-secondary" style={{ padding: '10px' }}>
-                <Lock size={15} /> Cập Nhật Mật Khẩu
+              <button 
+                type="submit" 
+                disabled={changingPass}
+                className="btn btn-secondary" 
+                style={{ padding: '10px', justifyContent: 'center' }}
+              >
+                {changingPass ? (
+                  <span>⏳ Đang đổi mật khẩu...</span>
+                ) : (
+                  <>
+                    <Lock size={15} />
+                    <span>Cập Nhật Mật Khẩu</span>
+                  </>
+                )}
               </button>
             </form>
 
-            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }} />
+            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.08)', margin: 0 }} />
 
             {/* Clear all players for new match */}
             <div>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#F87171', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#F87171', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 6px 0' }}>
                 <AlertTriangle size={16} /> Khu Vực Nguy Hiểm (Làm Mới Trận)
               </h4>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', margin: '6px 0 12px 0' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', margin: '0 0 12px 0' }}>
                 Xóa sạch danh sách cầu thủ điểm danh của trận này để bắt đầu nhận đăng ký cho trận đá bóng tuần sau.
               </p>
               <button
                 type="button"
                 onClick={handleClearAllPlayers}
                 className="btn-danger"
-                style={{ padding: '10px 16px', width: '100%', justifyContent: 'center' }}
+                style={{ padding: '10px 16px', width: '100%', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <Trash2 size={16} /> Xóa Sạch Danh Sách (Chuẩn Bị Kèo Mới)
               </button>
