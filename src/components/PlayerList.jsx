@@ -24,6 +24,7 @@ export default function PlayerList({
   const [teamCount, setTeamCount] = useState(match.teamCount || 2);
   const [splitting, setSplitting] = useState(false);
   const [internalSplitOpen, setInternalSplitOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   const showSplitCard = externalSplitOpen !== undefined ? externalSplitOpen : internalSplitOpen;
   const setShowSplitCard = setExternalSplitOpen || setInternalSplitOpen;
@@ -280,35 +281,6 @@ export default function PlayerList({
         </div>
       ) : (
         <>
-          {/* Team Composition Overview Bar */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '8px',
-            marginBottom: '12px',
-            fontSize: '0.72rem',
-            background: 'rgba(255, 255, 255, 0.02)',
-            padding: '7px 12px',
-            borderRadius: '8px',
-            border: '1px solid rgba(255, 255, 255, 0.06)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Vị trí:</span>
-              <span style={{ color: POSITIONS.GK.color, fontWeight: 700 }}>🧤 {players.filter(p => (p.position || 'MF') === 'GK').length} GK</span>
-              <span style={{ color: POSITIONS.DF.color, fontWeight: 700 }}>🛡️ {players.filter(p => (p.position || 'MF') === 'DF').length} DF</span>
-              <span style={{ color: POSITIONS.MF.color, fontWeight: 700 }}>⚽ {players.filter(p => (p.position || 'MF') === 'MF').length} MF</span>
-              <span style={{ color: POSITIONS.FW.color, fontWeight: 700 }}>🎯 {players.filter(p => (p.position || 'MF') === 'FW').length} FW</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>Trình độ:</span>
-              <span style={{ color: RATINGS.S.color, fontWeight: 800 }}>⭐ {players.filter(p => (p.rating || 'A') === 'S').length} S</span>
-              <span style={{ color: RATINGS.A.color, fontWeight: 800 }}>⚡ {players.filter(p => (p.rating || 'A') === 'A').length} A</span>
-              <span style={{ color: RATINGS.B.color, fontWeight: 800 }}>🟢 {players.filter(p => (p.rating || 'A') === 'B').length} B</span>
-            </div>
-          </div>
-
           <div className="player-grid">
             {players.map((player, idx) => {
               const isEditing = editingId === player.id;
@@ -376,99 +348,54 @@ export default function PlayerList({
                     </div>
                   ) : (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', flex: 1 }}>
+                      <div 
+                        onClick={() => setSelectedPlayer(player)}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '8px', 
+                          overflow: 'hidden', 
+                          flex: 1,
+                          cursor: 'pointer',
+                          minWidth: 0,
+                          padding: '2px 0'
+                        }}
+                        title="Bấm để xem vị trí & trình độ thi đấu"
+                      >
                         <span style={{ 
                           fontSize: '0.75rem', 
                           fontWeight: 700, 
                           color: 'var(--text-dim)',
-                          minWidth: '20px'
+                          minWidth: '22px',
+                          flexShrink: 0
                         }}>
                           #{idx + 1}
                         </span>
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>
+
+                        <div style={{ 
+                          overflow: 'hidden', 
+                          textOverflow: 'ellipsis', 
+                          whiteSpace: 'nowrap', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '6px',
+                          minWidth: 0
+                        }}>
+                          <span style={{ 
+                            fontSize: '0.92rem', 
+                            fontWeight: 700, 
+                            color: '#FFFFFF'
+                          }}>
                             {player.name}
                           </span>
-
-                          {/* Multi-position or single position badges */}
-                          {(() => {
-                            const strongPicks = player.skills && typeof player.skills === 'object'
-                              ? Object.entries(player.skills).filter(([_, v]) => v && v !== 'B' && v !== 'Ổn')
-                              : [];
-
-                            if (strongPicks.length > 0) {
-                              return strongPicks.map(([posKey, ratKey]) => {
-                                const pPos = POSITIONS[posKey] || POSITIONS.MF;
-                                const pRat = RATINGS[ratKey] || RATINGS.A;
-                                return (
-                                  <span key={posKey} style={{
-                                    fontSize: '0.64rem',
-                                    fontWeight: 800,
-                                    color: pPos.color,
-                                    background: pPos.badgeBg,
-                                    border: `1px solid ${pPos.border}`,
-                                    padding: '1px 5px',
-                                    borderRadius: '4px',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '2px',
-                                    flexShrink: 0
-                                  }} title={`${pPos.name} • Hạng ${ratKey}`}>
-                                    <span>{pPos.icon}</span>
-                                    <span>{pPos.id}</span>
-                                    <span style={{ color: pRat.color, marginLeft: '1px' }}>{ratKey}</span>
-                                  </span>
-                                );
-                              });
-                            }
-
-                            // If all 'Ổn' or legacy format
-                            return (
-                              <>
-                                <span style={{
-                                  fontSize: '0.64rem',
-                                  fontWeight: 800,
-                                  color: pos.color,
-                                  background: pos.badgeBg,
-                                  border: `1px solid ${pos.border}`,
-                                  padding: '1px 5px',
-                                  borderRadius: '4px',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '2px',
-                                  flexShrink: 0
-                                }} title={pos.name}>
-                                  <span>{pos.icon}</span>
-                                  <span>{pos.id}</span>
-                                </span>
-
-                                <span style={{
-                                  fontSize: '0.64rem',
-                                  fontWeight: 800,
-                                  color: rat.color,
-                                  background: rat.bg,
-                                  border: `1px solid ${rat.border}`,
-                                  padding: '1px 5px',
-                                  borderRadius: '4px',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '2px',
-                                  flexShrink: 0,
-                                  boxShadow: rat.id === 'S' ? '0 0 6px rgba(255, 215, 0, 0.4)' : 'none'
-                                }} title={rat.desc}>
-                                  <span>{rat.star}</span>
-                                  <span>{rat.id}</span>
-                                </span>
-                              </>
-                            );
-                          })()}
 
                           {isMyAdded && (
                             <span style={{ 
                               fontSize: '0.65rem', 
                               color: 'var(--emerald)', 
                               background: 'rgba(0, 242, 152, 0.12)',
-                              padding: '1px 5px',
+                              border: '1px solid rgba(0, 242, 152, 0.25)',
+                              padding: '1px 6px',
                               borderRadius: '4px',
                               fontWeight: 700,
                               flexShrink: 0
@@ -476,13 +403,26 @@ export default function PlayerList({
                               Bạn
                             </span>
                           )}
+
+                          <span style={{ 
+                            fontSize: '0.7rem', 
+                            color: '#64748B', 
+                            opacity: 0.75,
+                            flexShrink: 0
+                          }}>
+                            ℹ️
+                          </span>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
                         {isAdmin && (
                           <button 
-                            onClick={() => startEdit(player)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEdit(player);
+                            }}
                             style={{ background: 'none', border: 'none', color: '#FFA502', cursor: 'pointer', padding: '4px' }}
                             title="Sửa thông tin cầu thủ"
                           >
@@ -490,29 +430,33 @@ export default function PlayerList({
                           </button>
                         )}
 
-                      {canRemove && (
-                        <button 
-                          onClick={() => setConfirmPlayer(player)}
-                          style={{ 
-                            background: isMyAdded ? 'rgba(255, 107, 129, 0.15)' : 'none', 
-                            border: isMyAdded ? '1px solid rgba(255, 107, 129, 0.3)' : 'none', 
-                            color: '#FF6B81', 
-                            cursor: 'pointer', 
-                            padding: isMyAdded ? '3px 7px' : '4px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '3px'
-                          }}
-                          title={isMyAdded ? 'Hủy đăng ký của bạn' : 'Hủy đăng ký cầu thủ này'}
-                        >
-                          <Trash2 size={13} />
-                          {isMyAdded && <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>Hủy</span>}
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
+                        {canRemove && (
+                          <button 
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmPlayer(player);
+                            }}
+                            style={{ 
+                              background: isMyAdded ? 'rgba(255, 107, 129, 0.15)' : 'none', 
+                              border: isMyAdded ? '1px solid rgba(255, 107, 129, 0.3)' : 'none', 
+                              color: '#FF6B81', 
+                              cursor: 'pointer', 
+                              padding: isMyAdded ? '3px 7px' : '4px',
+                              borderRadius: '6px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px'
+                            }}
+                            title={isMyAdded ? 'Hủy đăng ký của bạn' : 'Hủy đăng ký cầu thủ này'}
+                          >
+                            <Trash2 size={13} />
+                            {isMyAdded && <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>Hủy</span>}
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
               </div>
             );
           })}
@@ -570,6 +514,192 @@ export default function PlayerList({
                 {deleting ? 'Đang xóa...' : 'Xác Nhận Xóa'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sleek Player Profile Modal (Vị trí & Trình độ thi đấu khi click vào tên) */}
+      {selectedPlayer && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setSelectedPlayer(null)}
+          style={{
+            animation: 'fadeIn 0.2s ease',
+            background: 'rgba(3, 7, 13, 0.82)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 999,
+            padding: '12px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              maxWidth: '380px', 
+              width: '100%',
+              boxSizing: 'border-box',
+              padding: '18px 16px',
+              animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+              borderRadius: '20px',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
+              overflowX: 'hidden'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: '16px', 
+              paddingBottom: '12px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '11px',
+                  background: 'linear-gradient(135deg, rgba(0, 242, 152, 0.2) 0%, rgba(0, 185, 107, 0.08) 100%)',
+                  border: '1px solid rgba(0, 242, 152, 0.35)',
+                  color: '#00F298',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  boxShadow: '0 4px 14px rgba(0, 242, 152, 0.18)'
+                }}>
+                  ⚽
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                      {selectedPlayer.name}
+                    </h3>
+                    {myAddedIds.includes(selectedPlayer.id) && (
+                      <span style={{ 
+                        fontSize: '0.65rem', 
+                        color: 'var(--emerald)', 
+                        background: 'rgba(0, 242, 152, 0.15)',
+                        border: '1px solid rgba(0, 242, 152, 0.25)',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        fontWeight: 700
+                      }}>
+                        Bạn
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>
+                    Vị trí & Năng lực thi đấu
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedPlayer(null)}
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.09)',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* 4 Positions Breakdown */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+              {['FW', 'MF', 'DF', 'GK'].map(posKey => {
+                const pos = POSITIONS[posKey] || POSITIONS.MF;
+                const rawTier = (selectedPlayer.skills && selectedPlayer.skills[posKey])
+                  ? selectedPlayer.skills[posKey]
+                  : (selectedPlayer.position === posKey ? selectedPlayer.rating : 'B');
+                const tierKey = rawTier === 'Ổn' ? 'B' : (rawTier || 'B');
+                const tier = RATINGS[tierKey] || RATINGS.B;
+                const isHighlight = tierKey === 'S' || tierKey === 'A';
+
+                return (
+                  <div
+                    key={posKey}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      background: isHighlight 
+                        ? 'rgba(255, 255, 255, 0.04)' 
+                        : 'rgba(255, 255, 255, 0.02)',
+                      border: isHighlight 
+                        ? `1px solid ${pos.border}` 
+                        : '1px solid rgba(255, 255, 255, 0.07)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.1rem' }}>{pos.icon}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.88rem', color: pos.color }}>
+                          {pos.id}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: '#CBD5E1', fontWeight: 600 }}>
+                          {pos.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      background: tier.bg,
+                      border: `1px solid ${tier.border}`,
+                      color: tier.color,
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      boxShadow: tierKey === 'S' ? '0 0 10px rgba(255, 215, 0, 0.25)' : 'none'
+                    }}>
+                      <span>{tier.star}</span>
+                      <span>{tierKey}</span>
+                      <span style={{ opacity: 0.9, fontWeight: 600, fontSize: '0.74rem' }}>
+                        • {tier.name}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setSelectedPlayer(null)}
+              className="btn btn-secondary"
+              style={{
+                width: '100%',
+                padding: '11px',
+                borderRadius: '12px',
+                fontSize: '0.88rem',
+                fontWeight: 700
+              }}
+            >
+              Đóng
+            </button>
           </div>
         </div>
       )}
