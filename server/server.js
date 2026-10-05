@@ -213,13 +213,13 @@ app.post('/api/admin/swap-players', (req, res) => {
   res.json({ success: true, data: getPublicState() });
 });
 
-// 6. Edit Player Name
+// 6. Edit Player Name & Attributes
 app.post('/api/admin/edit-player', (req, res) => {
   if (!verifyAdmin(req)) {
     return res.status(403).json({ success: false, message: 'Chưa xác thực quyền Admin!' });
   }
 
-  const { playerId, name } = req.body;
+  const { playerId, name, position, rating, skills } = req.body;
   const player = matchState.players.find(p => p.id === playerId);
   if (!player) {
     return res.status(404).json({ success: false, message: 'Không tìm thấy cầu thủ!' });
@@ -227,6 +227,15 @@ app.post('/api/admin/edit-player', (req, res) => {
 
   if (name && name.trim()) {
     player.name = name.trim();
+  }
+  if (skills && typeof skills === 'object') {
+    player.skills = skills;
+  }
+  if (position && ['FW', 'MF', 'DF', 'GK'].includes(position)) {
+    player.position = position;
+  }
+  if (rating && ['S', 'A', 'B', 'C', 'Ổn'].includes(rating)) {
+    player.rating = rating === 'Ổn' ? 'B' : rating;
   }
 
   saveMatchData(matchState);

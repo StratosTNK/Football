@@ -1,6 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Edit2, Trash2, Check, X, Shuffle, AlertCircle } from 'lucide-react';
-import { POSITIONS, RATINGS } from '../utils/teamBalancer';
+import { 
+  Users, 
+  Edit2, 
+  Trash2, 
+  Check, 
+  X, 
+  Shuffle, 
+  AlertCircle,
+  Crosshair,
+  Activity,
+  Shield,
+  Hand
+} from 'lucide-react';
+import { POSITIONS, RATINGS, derivePlayerAttributes } from '../utils/teamBalancer';
+
+// Role visual configuration matching registration modal
+const ROLE_CONFIGS = {
+  FW: {
+    id: 'FW',
+    label: 'Tiền đạo',
+    color: '#FF4757',
+    borderActive: '#FF4757',
+    icon: <Crosshair size={18} strokeWidth={2.2} />
+  },
+  MF: {
+    id: 'MF',
+    label: 'Tiền vệ',
+    color: '#00F298',
+    borderActive: '#00F298',
+    icon: <Activity size={18} strokeWidth={2.2} />
+  },
+  DF: {
+    id: 'DF',
+    label: 'Hậu vệ',
+    color: '#38BDF8',
+    borderActive: '#38BDF8',
+    icon: <Shield size={18} strokeWidth={2.2} />
+  },
+  GK: {
+    id: 'GK',
+    label: 'Thủ môn',
+    color: '#F59E0B',
+    borderActive: '#F59E0B',
+    icon: <Hand size={18} strokeWidth={2.2} />
+  }
+};
+
+// Tier buttons definition matching registration modal
+const TIER_OPTIONS = [
+  { 
+    id: 'S', 
+    label: 'S', 
+    color: '#FFD700', 
+    activeBg: 'linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(200, 140, 10, 0.1))', 
+    border: '#FFD700' 
+  },
+  { 
+    id: 'A', 
+    label: 'A', 
+    color: '#A78BFA', 
+    activeBg: 'linear-gradient(135deg, rgba(167, 139, 250, 0.25), rgba(124, 58, 237, 0.1))', 
+    border: '#A78BFA' 
+  },
+  { 
+    id: 'B', 
+    label: 'B', 
+    color: '#00F298', 
+    activeBg: 'linear-gradient(135deg, rgba(0, 242, 152, 0.22), rgba(5, 150, 105, 0.1))', 
+    border: '#00F298' 
+  },
+  { 
+    id: 'C', 
+    label: 'C', 
+    color: '#38BDF8', 
+    activeBg: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(37, 99, 235, 0.1))', 
+    border: '#38BDF8' 
+  }
+];
 
 export default function PlayerList({ 
   match, 
@@ -15,10 +91,11 @@ export default function PlayerList({
   setExternalSplitOpen
 }) {
   const { players = [] } = match;
-  const [editingId, setEditingId] = useState(null);
+  const [editingPlayer, setEditingPlayer] = useState(null);
   const [editName, setEditName] = useState('');
-  const [editPosition, setEditPosition] = useState('MF');
-  const [editRating, setEditRating] = useState('A');
+  const [editSkills, setEditSkills] = useState({ FW: 'B', MF: 'B', DF: 'B', GK: 'B' });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState(false);
   const [confirmPlayer, setConfirmPlayer] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [teamCount, setTeamCount] = useState(match.teamCount || 2);
@@ -53,32 +130,47 @@ export default function PlayerList({
   };
 
   const startEdit = (player) => {
-    setEditingId(player.id);
-    setEditName(player.name);
-    setEditPosition(player.position || 'MF');
-    setEditRating(player.rating || 'B');
+    setEditingPlayer(player);
+    setEditName(player.name || '');
+    setEditError(false);
+
+    let currentSkills = { FW: 'B', MF: 'B', DF: 'B', GK: 'B' };
+    if (player.skills && typeof player.skills === 'object') {
+      currentSkills = {
+        FW: player.skills.FW === 'Ổn' ? 'B' : (player.skills.FW || 'B'),
+        MF: player.skills.MF === 'Ổn' ? 'B' : (player.skills.MF || 'B'),
+        DF: player.skills.DF === 'Ổn' ? 'B' : (player.skills.DF || 'B'),
+        GK: player.skills.GK === 'Ổn' ? 'B' : (player.skills.GK || 'B'),
+      };
+    } else if (player.position) {
+      const r = player.rating === 'Ổn' ? 'B' : (player.rating || 'B');
+      currentSkills[player.position] = r;
+    }
+    setEditSkills(currentSkills);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditName('');
-  };
-
-  const saveEdit = async (playerId) => {
+  const saveEdit = async () => {
+    if (!editingPlayer) return;
     if (!editName.trim()) {
-      showToast('Tên không được để trống!');
+      setEditError(true);
+      showToast?.('⚠️ Tên không được để trống!');
       return;
     }
+    setSavingEdit(true);
     try {
-      await onEditPlayer(playerId, {
+      const derived = derivePlayerAttributes(editSkills);
+      await onEditPlayer(editingPlayer.id, {
         name: editName.trim(),
-        position: editPosition,
-        rating: editRating
+        skills: editSkills,
+        position: derived.primaryPosition,
+        rating: derived.primaryRating
       });
-      setEditingId(null);
-      showToast('Đã lưu thông tin cầu thủ.');
-    } catch {
-      showToast('Lỗi lưu thông tin.');
+      setEditingPlayer(null);
+      showToast?.(`✅ Đã cập nhật thông tin cầu thủ "${editName.trim()}".`);
+    } catch (err) {
+      showToast?.(err.message || 'Lỗi lưu thông tin.');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -283,71 +375,12 @@ export default function PlayerList({
         <>
           <div className="player-grid">
             {players.map((player, idx) => {
-              const isEditing = editingId === player.id;
               const isMyAdded = myAddedIds.includes(player.id);
               // Can remove: Admin can remove anytime; Guests can remove when match is OPEN
               const canRemove = isAdmin || match.status === 'OPEN';
-              const pos = POSITIONS[player.position] || POSITIONS.MF;
-              const rat = RATINGS[player.rating] || RATINGS.A;
 
               return (
                 <div key={player.id} className="player-item">
-                  {isEditing ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', padding: '4px 0' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--emerald)' }}>#{idx + 1}</span>
-                        <input 
-                          type="text" 
-                          className="clean-input" 
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          style={{ padding: '4px 8px', fontSize: '0.85rem', flex: 1 }}
-                          autoFocus
-                        />
-                        <button 
-                          onClick={() => saveEdit(player.id)} 
-                          className="btn btn-primary"
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                        >
-                          <Check size={14} />
-                        </button>
-                        <button 
-                          onClick={cancelEdit} 
-                          className="btn btn-secondary"
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '0.74rem', flexWrap: 'wrap' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Vị trí:</span>
-                        <select 
-                          value={editPosition} 
-                          onChange={(e) => setEditPosition(e.target.value)}
-                          className="clean-input"
-                          style={{ padding: '2px 6px', fontSize: '0.74rem' }}
-                        >
-                          <option value="FW">🎯 FW - Tiền đạo</option>
-                          <option value="MF">⚽ MF - Tiền vệ</option>
-                          <option value="DF">🛡️ DF - Hậu vệ</option>
-                          <option value="GK">🧤 GK - Thủ môn</option>
-                        </select>
-                        <span style={{ color: 'var(--text-muted)', marginLeft: '4px' }}>Trình độ:</span>
-                        <select 
-                          value={editRating} 
-                          onChange={(e) => setEditRating(e.target.value)}
-                          className="clean-input"
-                          style={{ padding: '2px 6px', fontSize: '0.74rem' }}
-                        >
-                          <option value="S">⭐ S - Gánh team</option>
-                          <option value="A">⚡ A - Chắc chân</option>
-                          <option value="B">🟢 B - Tròn vai (Mặc định)</option>
-                          <option value="C">⚪ C - Dưỡng sinh</option>
-                        </select>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
                       <div 
                         onClick={() => setSelectedPlayer(player)}
                         style={{ 
@@ -455,8 +488,6 @@ export default function PlayerList({
                           </button>
                         )}
                       </div>
-                    </>
-                  )}
               </div>
             );
           })}
@@ -685,21 +716,406 @@ export default function PlayerList({
               })}
             </div>
 
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setSelectedPlayer(null)}
-              className="btn btn-secondary"
-              style={{
-                width: '100%',
-                padding: '11px',
-                borderRadius: '12px',
-                fontSize: '0.88rem',
-                fontWeight: 700
-              }}
-            >
-              Đóng
-            </button>
+            {/* Action Buttons in Profile Modal */}
+            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedPlayer(null)}
+                className="btn btn-secondary"
+                style={{
+                  flex: 1,
+                  padding: '11px',
+                  borderRadius: '12px',
+                  fontSize: '0.88rem',
+                  fontWeight: 700
+                }}
+              >
+                Đóng
+              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const p = selectedPlayer;
+                    setSelectedPlayer(null);
+                    startEdit(p);
+                  }}
+                  className="btn"
+                  style={{
+                    flex: 1,
+                    padding: '11px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(255, 165, 2, 0.2), rgba(230, 126, 34, 0.15))',
+                    border: '1px solid rgba(255, 165, 2, 0.4)',
+                    color: '#FFA502',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Edit2 size={15} />
+                  <span>Chỉnh Sửa</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Player Modal (Dạng bảng năng lực 4x4 như Tham Gia) */}
+      {editingPlayer && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => !savingEdit && setEditingPlayer(null)}
+          style={{ 
+            animation: 'fadeIn 0.2s ease',
+            background: 'rgba(3, 7, 13, 0.85)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 1000,
+            padding: '12px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              maxWidth: '460px', 
+              width: '100%',
+              boxSizing: 'border-box',
+              padding: '18px 16px',
+              animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+              borderRadius: '20px',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
+              overflowX: 'hidden'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: '16px', 
+              paddingBottom: '12px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.07)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '11px',
+                  background: 'linear-gradient(135deg, rgba(255, 165, 2, 0.2) 0%, rgba(230, 126, 34, 0.08) 100%)',
+                  border: '1px solid rgba(255, 165, 2, 0.35)',
+                  color: '#FFA502',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(255, 165, 2, 0.18)'
+                }}>
+                  <Edit2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
+                    Chỉnh Sửa Cầu Thủ
+                  </h3>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>
+                    Cập nhật họ tên và năng lực từng vị trí
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => !savingEdit && setEditingPlayer(null)}
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.09)',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Edit Form */}
+            <form onSubmit={(e) => { e.preventDefault(); saveEdit(); }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* Field 1: Name */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.82rem', color: '#E2E8F0', fontWeight: 700, margin: 0 }}>
+                    Họ và tên cầu thủ: <span style={{ color: '#FF4757' }}>*</span>
+                  </label>
+                  <span style={{ fontSize: '0.7rem', color: '#64748B' }}>
+                    Bắt buộc
+                  </span>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: '13px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none',
+                    fontSize: '1rem',
+                    lineHeight: 1
+                  }}>
+                    ✍️
+                  </div>
+
+                  <input 
+                    type="text"
+                    placeholder="Nhập tên..."
+                    value={editName}
+                    onChange={(e) => {
+                      setEditName(e.target.value);
+                      if (editError && e.target.value.trim()) setEditError(false);
+                    }}
+                    maxLength={40}
+                    required
+                    autoFocus
+                    disabled={savingEdit}
+                    style={{ 
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      background: 'rgba(13, 21, 33, 0.85)',
+                      border: editError 
+                        ? '1.5px solid #FF4757' 
+                        : (editName.trim() ? '1px solid rgba(0, 242, 152, 0.5)' : '1px solid rgba(255, 255, 255, 0.12)'),
+                      borderRadius: '12px',
+                      padding: '11px 14px 11px 38px',
+                      color: '#FFFFFF',
+                      fontSize: '0.92rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      boxShadow: editError 
+                        ? '0 0 0 3px rgba(255, 71, 87, 0.15)' 
+                        : (editName.trim() ? '0 0 0 3px rgba(0, 242, 152, 0.1)' : 'inset 0 2px 4px rgba(0,0,0,0.3)'),
+                      transition: 'all 0.2s ease'
+                    }}
+                  />
+                </div>
+
+                {editError && (
+                  <div style={{ 
+                    fontSize: '0.72rem', 
+                    color: '#FF6B81', 
+                    marginTop: '5px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '5px',
+                    background: 'rgba(255, 71, 87, 0.08)',
+                    padding: '5px 8px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 71, 87, 0.2)'
+                  }}>
+                    <AlertCircle size={13} />
+                    <span>Họ và tên không được để trống!</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Field 2: Multi-Position Capability Matrix */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.82rem', color: '#E2E8F0', fontWeight: 700, margin: 0 }}>
+                    Thông tin năng lực theo vị trí:
+                  </label>
+                  <span style={{ fontSize: '0.7rem', color: '#00F298', fontWeight: 600 }}>
+                    Mặc định: B
+                  </span>
+                </div>
+
+                {/* Subtitle helper */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '0.66rem',
+                  color: '#94A3B8',
+                  marginBottom: '8px',
+                  padding: '0 4px',
+                  flexWrap: 'wrap',
+                  gap: '4px'
+                }}>
+                  <span>Chọn mức độ từng vị trí:</span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#FFD700', fontWeight: 700 }}>⭐ S: Gánh team</span>
+                    <span style={{ color: '#A78BFA', fontWeight: 700 }}>⚡ A: Chắc chân</span>
+                    <span style={{ color: '#00F298', fontWeight: 700 }}>🟢 B: Tròn vai</span>
+                    <span style={{ color: '#38BDF8', fontWeight: 700 }}>⚪ C: Dưỡng sinh</span>
+                  </div>
+                </div>
+
+                {/* 4 Rows: FW, MF, DF, GK */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {Object.values(ROLE_CONFIGS).map((pos) => {
+                    const currentTier = editSkills[pos.id] || 'B';
+
+                    return (
+                      <div
+                        key={pos.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: 'rgba(255, 255, 255, 0.025)',
+                          border: currentTier !== 'B' 
+                            ? `1px solid ${pos.borderActive}55` 
+                            : '1px solid rgba(255, 255, 255, 0.07)',
+                          borderRadius: '12px',
+                          padding: '6px 8px',
+                          gap: '8px',
+                          boxSizing: 'border-box',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {/* Position badge */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '76px', flexShrink: 0 }}>
+                          <div style={{
+                            color: pos.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {pos.icon}
+                          </div>
+                          <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
+                            <div style={{ fontSize: '0.84rem', fontWeight: 800, color: pos.color }}>
+                              {pos.id}
+                            </div>
+                            <div style={{ fontSize: '0.62rem', color: '#64748B' }}>
+                              {pos.label}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 4 Segmented Buttons: S, A, B, C */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', flex: 1, minWidth: 0 }}>
+                          {TIER_OPTIONS.map(tier => {
+                            const isActive = currentTier === tier.id;
+
+                            return (
+                              <button
+                                key={tier.id}
+                                type="button"
+                                onClick={() => setEditSkills(prev => ({ ...prev, [pos.id]: tier.id }))}
+                                style={{
+                                  padding: '7px 2px',
+                                  minWidth: 0,
+                                  boxSizing: 'border-box',
+                                  borderRadius: '8px',
+                                  border: isActive ? `1.5px solid ${tier.border}` : '1px solid rgba(255, 255, 255, 0.07)',
+                                  background: isActive ? tier.activeBg : 'rgba(255, 255, 255, 0.02)',
+                                  color: isActive ? tier.color : '#64748B',
+                                  fontWeight: isActive ? 800 : 600,
+                                  fontSize: '0.8rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxShadow: isActive ? `0 2px 8px ${tier.border}30` : 'none',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                {tier.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingPlayer(null)}
+                  disabled={savingEdit}
+                  style={{ 
+                    flex: 1, 
+                    padding: '11px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#CBD5E1',
+                    fontSize: '0.88rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <X size={15} />
+                  <span>Hủy</span>
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={savingEdit || !editName.trim()}
+                  style={{ 
+                    flex: 2, 
+                    padding: '11px', 
+                    borderRadius: '12px',
+                    fontSize: '0.92rem', 
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    ...(editName.trim() ? {
+                      background: 'linear-gradient(135deg, #00F298 0%, #00B96B 100%)',
+                      color: '#03140C',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      boxShadow: '0 6px 20px rgba(0, 242, 152, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                      cursor: 'pointer'
+                    } : {
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      color: '#64748B',
+                      border: '1px dashed rgba(255, 255, 255, 0.12)',
+                      boxShadow: 'none',
+                      cursor: 'not-allowed'
+                    })
+                  }}
+                >
+                  {savingEdit ? (
+                    <span>Đang lưu...</span>
+                  ) : (
+                    <>
+                      <Check size={16} />
+                      <span>Lưu Thay Đổi ⚽</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
