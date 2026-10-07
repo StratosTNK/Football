@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { POSITIONS, RATINGS, derivePlayerAttributes } from '../utils/teamBalancer';
+import Portal from './Portal';
 import { 
   UserPlus, 
   X, 
@@ -220,36 +221,31 @@ export default function PlayerRegistration({
 
       {/* Registration Modal Popup */}
       {isOpen && (
-        <div 
-          className="modal-overlay" 
-          onClick={() => !loading && setIsOpen(false)}
-          style={{ 
-            animation: 'fadeIn 0.2s ease',
-            background: 'rgba(3, 7, 13, 0.85)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            zIndex: 999,
-            padding: '12px',
-            boxSizing: 'border-box'
-          }}
-        >
+        <Portal>
           <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ 
-              maxWidth: '460px', 
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '18px 16px',
-              animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-              background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.22)',
-              borderRadius: '20px',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
-              overflowX: 'hidden'
-            }}
+            className="modal-overlay" 
+            onClick={() => !loading && setIsOpen(false)}
           >
+            <div 
+              className="modal-content" 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ 
+                maxWidth: '460px', 
+                width: '100%',
+                maxHeight: 'calc(100dvh - 24px)',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                boxSizing: 'border-box',
+                padding: '16px 14px',
+                animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+                borderRadius: '20px',
+                boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
+                margin: 'auto'
+              }}
+            >
             {/* Modal Header */}
             <div style={{ 
               display: 'flex', 
@@ -440,7 +436,7 @@ export default function PlayerRegistration({
                         }}
                       >
                         {/* Position badge */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '76px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '70px', flexShrink: 0 }}>
                           <div style={{
                             color: pos.color,
                             display: 'flex',
@@ -459,7 +455,7 @@ export default function PlayerRegistration({
                           </div>
                         </div>
 
-                        {/* 4 Segmented Buttons: S, A, B, Ổn */}
+                        {/* 4 Segmented Buttons: S, A, B, C */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', flex: 1, minWidth: 0 }}>
                           {TIER_OPTIONS.map(tier => {
                             const isActive = currentTier === tier.id;
@@ -573,6 +569,7 @@ export default function PlayerRegistration({
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

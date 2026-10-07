@@ -10,6 +10,7 @@ import AdminLoginModal from './components/AdminLoginModal';
 import AdminPanel from './components/AdminPanel';
 import ChampionsLeagueAudioPlayer from './components/ChampionsLeagueAudioPlayer';
 import PitchFinderModal from './components/PitchFinderModal';
+import Portal from './components/Portal';
 import { Shirt, ListChecks, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
 
 export default function App() {
@@ -477,12 +478,13 @@ export default function App() {
 
         {/* Quick Split Modal triggered from Header Chia Đội button */}
         {showSplitModal && (
-          <div className="modal-overlay" onClick={() => setShowSplitModal(false)}>
-            <div 
-              className="modal-content" 
-              onClick={(e) => e.stopPropagation()} 
-              style={{ maxWidth: '360px', textAlign: 'center' }}
-            >
+          <Portal>
+            <div className="modal-overlay" onClick={() => setShowSplitModal(false)}>
+              <div 
+                className="modal-content" 
+                onClick={(e) => e.stopPropagation()} 
+                style={{ maxWidth: '360px', textAlign: 'center', margin: 'auto' }}
+              >
               <div style={{
                 width: '46px',
                 height: '46px',
@@ -644,6 +646,7 @@ export default function App() {
               </button>
             </div>
           </div>
+          </Portal>
         )}
 
         <AdminPanel 

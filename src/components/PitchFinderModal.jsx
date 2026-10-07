@@ -12,6 +12,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { DANANG_PITCHES, getGoogleMapsSearchUrl } from '../data/daNangPitches';
+import Portal from './Portal';
 
 export default function PitchFinderModal({ 
   match, 
@@ -109,22 +110,24 @@ export default function PitchFinderModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className="modal-content" 
-        onClick={(e) => e.stopPropagation()} 
-        style={{ 
-          maxWidth: '620px', 
-          width: '100%', 
-          maxHeight: '92vh', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          padding: '18px 16px',
-          borderRadius: '16px',
-          background: 'linear-gradient(180deg, #131E2E 0%, #0B131F 100%)',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.1)'
-        }}
-      >
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div 
+          className="modal-content" 
+          onClick={(e) => e.stopPropagation()} 
+          style={{ 
+            maxWidth: '620px', 
+            width: '100%', 
+            maxHeight: 'calc(100dvh - 24px)', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            padding: '18px 16px',
+            borderRadius: '16px',
+            background: 'linear-gradient(180deg, #131E2E 0%, #0B131F 100%)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.1)',
+            margin: 'auto'
+          }}
+        >
         {/* Modal Header */}
         <div style={{
           display: 'flex',
@@ -853,5 +856,6 @@ export default function PitchFinderModal({
         )}
       </div>
     </div>
+    </Portal>
   );
 }

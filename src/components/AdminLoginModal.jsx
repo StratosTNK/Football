@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, KeyRound, X, Check, Eye, EyeOff } from 'lucide-react';
+import Portal from './Portal';
 
 export default function AdminLoginModal({ 
   isOpen, 
@@ -40,8 +41,9 @@ export default function AdminLoginModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ margin: 'auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -133,5 +135,6 @@ export default function AdminLoginModal({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

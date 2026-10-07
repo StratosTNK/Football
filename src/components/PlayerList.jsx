@@ -13,6 +13,7 @@ import {
   Hand
 } from 'lucide-react';
 import { POSITIONS, RATINGS, derivePlayerAttributes } from '../utils/teamBalancer';
+import Portal from './Portal';
 
 // Role visual configuration matching registration modal
 const ROLE_CONFIGS = {
@@ -497,307 +498,304 @@ export default function PlayerList({
 
       {/* Sleek In-App Confirmation Modal (Fixes window.confirm blocked on mobile/Zalo) */}
       {confirmPlayer && (
-        <div className="modal-overlay" onClick={() => !deleting && setConfirmPlayer(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '350px', textAlign: 'center' }}>
-            <div style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '50%',
-              background: 'rgba(255, 107, 129, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 12px auto',
-              color: '#FF6B81'
-            }}>
-              <AlertCircle size={24} />
-            </div>
+        <Portal>
+          <div className="modal-overlay" onClick={() => !deleting && setConfirmPlayer(null)}>
+            <div 
+              className="modal-content" 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ maxWidth: '350px', textAlign: 'center', margin: 'auto' }}
+            >
+              <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '50%',
+                background: 'rgba(255, 107, 129, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px auto',
+                color: '#FF6B81'
+              }}>
+                <AlertCircle size={24} />
+              </div>
 
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
-              Hủy Điểm Danh?
-            </h3>
-            
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.4 }}>
-              Bạn có chắc muốn xóa <strong style={{ color: '#fff' }}>"{confirmPlayer.name}"</strong> khỏi danh sách trận đấu?
-            </p>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
+                Hủy Điểm Danh?
+              </h3>
+              
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.4 }}>
+                Bạn có chắc muốn xóa <strong style={{ color: '#fff' }}>"{confirmPlayer.name}"</strong> khỏi danh sách trận đấu?
+              </p>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => setConfirmPlayer(null)}
-                className="btn btn-secondary"
-                style={{ flex: 1, padding: '10px' }}
-                disabled={deleting}
-              >
-                Quay Lại
-              </button>
-              <button
-                onClick={handleExecuteDelete}
-                className="btn"
-                style={{ 
-                  flex: 1, 
-                  padding: '10px', 
-                  background: 'linear-gradient(135deg, #FF6B81, #EE5253)', 
-                  color: '#fff',
-                  fontWeight: 700 
-                }}
-                disabled={deleting}
-              >
-                {deleting ? 'Đang xóa...' : 'Xác Nhận Xóa'}
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setConfirmPlayer(null)}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, padding: '10px' }}
+                  disabled={deleting}
+                >
+                  Quay Lại
+                </button>
+                <button
+                  onClick={handleExecuteDelete}
+                  className="btn"
+                  style={{ 
+                    flex: 1, 
+                    padding: '10px', 
+                    background: 'linear-gradient(135deg, #FF6B81, #EE5253)', 
+                    color: '#fff',
+                    fontWeight: 700 
+                  }}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Đang xóa...' : 'Xác Nhận Xóa'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* Sleek Player Profile Modal (Vị trí & Trình độ thi đấu khi click vào tên) */}
       {selectedPlayer && (
-        <div 
-          className="modal-overlay" 
-          onClick={() => setSelectedPlayer(null)}
-          style={{
-            animation: 'fadeIn 0.2s ease',
-            background: 'rgba(3, 7, 13, 0.82)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            zIndex: 999,
-            padding: '12px',
-            boxSizing: 'border-box'
-          }}
-        >
+        <Portal>
           <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ 
-              maxWidth: '380px', 
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '18px 16px',
-              animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-              background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.22)',
-              borderRadius: '20px',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
-              overflowX: 'hidden'
-            }}
+            className="modal-overlay" 
+            onClick={() => setSelectedPlayer(null)}
           >
-            {/* Modal Header */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              marginBottom: '16px', 
-              paddingBottom: '12px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '11px',
-                  background: 'linear-gradient(135deg, rgba(0, 242, 152, 0.2) 0%, rgba(0, 185, 107, 0.08) 100%)',
-                  border: '1px solid rgba(0, 242, 152, 0.35)',
-                  color: '#00F298',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.2rem',
-                  boxShadow: '0 4px 14px rgba(0, 242, 152, 0.18)'
-                }}>
-                  ⚽
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
-                      {selectedPlayer.name}
-                    </h3>
-                    {myAddedIds.includes(selectedPlayer.id) && (
-                      <span style={{ 
-                        fontSize: '0.65rem', 
-                        color: 'var(--emerald)', 
-                        background: 'rgba(0, 242, 152, 0.15)',
-                        border: '1px solid rgba(0, 242, 152, 0.25)',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        fontWeight: 700
-                      }}>
-                        Bạn
-                      </span>
-                    )}
+            <div 
+              className="modal-content" 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ 
+                maxWidth: '380px', 
+                width: '100%',
+                maxHeight: 'calc(100dvh - 24px)',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                boxSizing: 'border-box',
+                padding: '16px 14px',
+                animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+                borderRadius: '20px',
+                boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
+                margin: 'auto'
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                marginBottom: '16px', 
+                paddingBottom: '12px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '11px',
+                    background: 'linear-gradient(135deg, rgba(0, 242, 152, 0.2) 0%, rgba(0, 185, 107, 0.08) 100%)',
+                    border: '1px solid rgba(0, 242, 152, 0.35)',
+                    color: '#00F298',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem',
+                    boxShadow: '0 4px 14px rgba(0, 242, 152, 0.18)'
+                  }}>
+                    ⚽
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>
-                    Vị trí & Năng lực thi đấu
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                        {selectedPlayer.name}
+                      </h3>
+                      {myAddedIds.includes(selectedPlayer.id) && (
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          color: 'var(--emerald)', 
+                          background: 'rgba(0, 242, 152, 0.15)',
+                          border: '1px solid rgba(0, 242, 152, 0.25)',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontWeight: 700
+                        }}>
+                          Bạn
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>
+                      Vị trí & Năng lực thi đấu
+                    </div>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlayer(null)}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.09)',
+                    color: '#94A3B8',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <X size={15} />
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedPlayer(null)}
-                style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.09)',
-                  color: '#94A3B8',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <X size={15} />
-              </button>
-            </div>
+              {/* 4 Positions Breakdown */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                {['FW', 'MF', 'DF', 'GK'].map(posKey => {
+                  const pos = POSITIONS[posKey] || POSITIONS.MF;
+                  const rawTier = (selectedPlayer.skills && selectedPlayer.skills[posKey])
+                    ? selectedPlayer.skills[posKey]
+                    : (selectedPlayer.position === posKey ? selectedPlayer.rating : 'B');
+                  const tierKey = rawTier === 'Ổn' ? 'B' : (rawTier || 'B');
+                  const tier = RATINGS[tierKey] || RATINGS.B;
+                  const isHighlight = tierKey === 'S' || tierKey === 'A';
 
-            {/* 4 Positions Breakdown */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-              {['FW', 'MF', 'DF', 'GK'].map(posKey => {
-                const pos = POSITIONS[posKey] || POSITIONS.MF;
-                const rawTier = (selectedPlayer.skills && selectedPlayer.skills[posKey])
-                  ? selectedPlayer.skills[posKey]
-                  : (selectedPlayer.position === posKey ? selectedPlayer.rating : 'B');
-                const tierKey = rawTier === 'Ổn' ? 'B' : (rawTier || 'B');
-                const tier = RATINGS[tierKey] || RATINGS.B;
-                const isHighlight = tierKey === 'S' || tierKey === 'A';
+                  return (
+                    <div
+                      key={posKey}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        background: isHighlight 
+                          ? 'rgba(255, 255, 255, 0.04)' 
+                          : 'rgba(255, 255, 255, 0.02)',
+                        border: isHighlight 
+                          ? `1px solid ${pos.border}` 
+                          : '1px solid rgba(255, 255, 255, 0.07)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.1rem' }}>{pos.icon}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.88rem', color: pos.color }}>
+                            {pos.id}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: '#CBD5E1', fontWeight: 600 }}>
+                            {pos.name}
+                          </span>
+                        </div>
+                      </div>
 
-                return (
-                  <div
-                    key={posKey}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      background: isHighlight 
-                        ? 'rgba(255, 255, 255, 0.04)' 
-                        : 'rgba(255, 255, 255, 0.02)',
-                      border: isHighlight 
-                        ? `1px solid ${pos.border}` 
-                        : '1px solid rgba(255, 255, 255, 0.07)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>{pos.icon}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.88rem', color: pos.color }}>
-                          {pos.id}
-                        </span>
-                        <span style={{ fontSize: '0.8rem', color: '#CBD5E1', fontWeight: 600 }}>
-                          {pos.name}
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        background: tier.bg,
+                        border: `1px solid ${tier.border}`,
+                        color: tier.color,
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        boxShadow: tierKey === 'S' ? '0 0 10px rgba(255, 215, 0, 0.25)' : 'none'
+                      }}>
+                        <span>{tier.star}</span>
+                        <span>{tierKey}</span>
+                        <span style={{ opacity: 0.9, fontWeight: 600, fontSize: '0.74rem' }}>
+                          • {tier.name}
                         </span>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
 
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '4px 10px',
-                      borderRadius: '8px',
-                      background: tier.bg,
-                      border: `1px solid ${tier.border}`,
-                      color: tier.color,
-                      fontWeight: 800,
-                      fontSize: '0.78rem',
-                      boxShadow: tierKey === 'S' ? '0 0 10px rgba(255, 215, 0, 0.25)' : 'none'
-                    }}>
-                      <span>{tier.star}</span>
-                      <span>{tierKey}</span>
-                      <span style={{ opacity: 0.9, fontWeight: 600, fontSize: '0.74rem' }}>
-                        • {tier.name}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Action Buttons in Profile Modal */}
-            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-              <button
-                type="button"
-                onClick={() => setSelectedPlayer(null)}
-                className="btn btn-secondary"
-                style={{
-                  flex: 1,
-                  padding: '11px',
-                  borderRadius: '12px',
-                  fontSize: '0.88rem',
-                  fontWeight: 700
-                }}
-              >
-                Đóng
-              </button>
-              {isAdmin && (
+              {/* Action Buttons in Profile Modal */}
+              <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    const p = selectedPlayer;
-                    setSelectedPlayer(null);
-                    startEdit(p);
-                  }}
-                  className="btn"
+                  onClick={() => setSelectedPlayer(null)}
+                  className="btn btn-secondary"
                   style={{
                     flex: 1,
                     padding: '11px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, rgba(255, 165, 2, 0.2), rgba(230, 126, 34, 0.15))',
-                    border: '1px solid rgba(255, 165, 2, 0.4)',
-                    color: '#FFA502',
                     fontSize: '0.88rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    cursor: 'pointer'
+                    fontWeight: 700
                   }}
                 >
-                  <Edit2 size={15} />
-                  <span>Chỉnh Sửa</span>
+                  Đóng
                 </button>
-              )}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = selectedPlayer;
+                      setSelectedPlayer(null);
+                      startEdit(p);
+                    }}
+                    className="btn"
+                    style={{
+                      flex: 1,
+                      padding: '11px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, rgba(255, 165, 2, 0.2), rgba(230, 126, 34, 0.15))',
+                      border: '1px solid rgba(255, 165, 2, 0.4)',
+                      color: '#FFA502',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Edit2 size={15} />
+                    <span>Chỉnh Sửa</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* Edit Player Modal (Dạng bảng năng lực 4x4 như Tham Gia) */}
       {editingPlayer && (
-        <div 
-          className="modal-overlay" 
-          onClick={() => !savingEdit && setEditingPlayer(null)}
-          style={{ 
-            animation: 'fadeIn 0.2s ease',
-            background: 'rgba(3, 7, 13, 0.85)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            zIndex: 1000,
-            padding: '12px',
-            boxSizing: 'border-box'
-          }}
-        >
+        <Portal>
           <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ 
-              maxWidth: '460px', 
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '18px 16px',
-              animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-              background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.22)',
-              borderRadius: '20px',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
-              overflowX: 'hidden'
-            }}
+            className="modal-overlay" 
+            onClick={() => !savingEdit && setEditingPlayer(null)}
           >
+            <div 
+              className="modal-content" 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ 
+                maxWidth: '460px', 
+                width: '100%',
+                maxHeight: 'calc(100dvh - 24px)',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                boxSizing: 'border-box',
+                padding: '16px 14px',
+                animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+                borderRadius: '20px',
+                boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
+                margin: 'auto'
+              }}
+            >
             {/* Modal Header */}
             <div style={{ 
               display: 'flex', 
@@ -991,7 +989,7 @@ export default function PlayerList({
                         }}
                       >
                         {/* Position badge */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '76px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '70px', flexShrink: 0 }}>
                           <div style={{
                             color: pos.color,
                             display: 'flex',
@@ -1118,6 +1116,7 @@ export default function PlayerList({
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

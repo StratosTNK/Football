@@ -14,6 +14,7 @@ import {
   FileText
 } from 'lucide-react';
 import { DANANG_PITCHES, getGoogleMapsSearchUrl } from '../data/daNangPitches';
+import Portal from './Portal';
 
 export default function AdminPanel({ 
   isOpen, 
@@ -144,12 +145,13 @@ export default function AdminPanel({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className="modal-content admin-panel-modal" 
-        style={{ maxWidth: '520px', maxHeight: '92vh', overflowY: 'auto' }} 
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div 
+          className="modal-content admin-panel-modal" 
+          style={{ maxWidth: '520px', maxHeight: 'calc(100dvh - 24px)', overflowY: 'auto', margin: 'auto' }} 
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Mobile Drag Pill */}
         <div className="modal-drag-pill"></div>
 
@@ -527,5 +529,6 @@ export default function AdminPanel({
         )}
       </div>
     </div>
+    </Portal>
   );
 }

@@ -17,6 +17,7 @@ import {
 import { toPng } from 'html-to-image';
 import { formatTeamsForZalo, formatDateDMY } from '../utils/zaloFormatter';
 import { POSITIONS, RATINGS, calculateTeamStats } from '../utils/teamBalancer';
+import Portal from './Portal';
 
 export default function TeamDivider({ 
   match, 
@@ -892,12 +893,13 @@ export default function TeamDivider({
 
       {/* Modal Preview & Tải Ảnh Chia Đội Gửi Zalo */}
       {showImageModal && (
-        <div className="modal-overlay" onClick={() => setShowImageModal(false)}>
-          <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ maxWidth: '660px', padding: '16px', textAlign: 'center' }}
-          >
+        <Portal>
+          <div className="modal-overlay" onClick={() => setShowImageModal(false)}>
+            <div 
+              className="modal-content" 
+              onClick={(e) => e.stopPropagation()} 
+              style={{ maxWidth: '660px', padding: '16px', textAlign: 'center', margin: 'auto' }}
+            >
             {/* Modal Header */}
             <div style={{
               display: 'flex',
@@ -1031,6 +1033,7 @@ export default function TeamDivider({
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Dedicated Off-Screen Render Node for High-Res PNG Capture (Matches Image 3 Exactly) */}
