@@ -30,6 +30,7 @@ export default function TeamDivider({
   const { players = [], teamCount = 2 } = match;
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTransferPlayerId, setActiveTransferPlayerId] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
   const menuRef = useRef(null);
 
   // Image Export States
@@ -276,6 +277,8 @@ export default function TeamDivider({
               return (
                 <div 
                   key={player.id} 
+                  className="team-player-pill"
+                  onClick={() => setSelectedPlayer(player)}
                   style={{
                     gridColumn: isTransferring ? '1 / -1' : undefined,
                     background: isTransferring 
@@ -290,44 +293,42 @@ export default function TeamDivider({
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    transition: 'all 0.15s ease',
+                    cursor: 'pointer',
                     boxShadow: isTransferring 
                       ? '0 0 12px rgba(0, 242, 152, 0.15)' 
                       : '0 2px 6px rgba(0, 0, 0, 0.25)',
                     position: 'relative'
                   }}
+                  title="Chạm để xem chi tiết vị trí & năng lực"
                 >
                   {/* Player Name Row */}
                   <div 
-                    onClick={() => isAdmin && setActiveTransferPlayerId(isTransferring ? null : player.id)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: '6px',
-                      cursor: isAdmin ? 'pointer' : 'default',
+                      gap: '8px',
                       width: '100%'
                     }}
-                    title={isAdmin ? (isTransferring ? 'Đóng chuyển đội' : 'Chạm để đổi đội cho cầu thủ này') : undefined}
                   >
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
+                      gap: '8px',
                       minWidth: 0,
                       flex: 1
                     }}>
                       {/* Jersey Number Badge */}
                       <div style={{
-                        width: '20px',
-                        height: '20px',
+                        width: '22px',
+                        height: '22px',
                         borderRadius: '6px',
                         background: `${teamMeta.color}20`,
                         border: `1px solid ${teamMeta.color}45`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '0.68rem',
+                        fontSize: '0.7rem',
                         fontWeight: 800,
                         color: teamMeta.color,
                         flexShrink: 0
@@ -335,99 +336,92 @@ export default function TeamDivider({
                         {idx + 1}
                       </div>
 
-                      {/* Player Name: Full width with 2-line wrapping for long names */}
+                      {/* Player Name: Full width with single line & ellipsis */}
                       <span style={{
                         fontWeight: 700,
-                        fontSize: '0.82rem',
+                        fontSize: '0.86rem',
                         color: '#FFFFFF',
-                        lineHeight: 1.25,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
+                        lineHeight: 1.3,
+                        flex: 1,
+                        minWidth: 0,
                         overflow: 'hidden',
-                        wordBreak: 'break-word',
-                        flex: 1
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
                       }}>
                         {player.name}
                       </span>
 
-                      {/* Position Badge */}
+                      {/* Position Badge ONLY (Tier is shown in popup when tapped) */}
                       {(() => {
                         const pos = POSITIONS[player.position] || POSITIONS.MF;
-                        const rat = RATINGS[player.rating] || RATINGS.A;
                         return (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
                             <span style={{
-                              fontSize: '0.62rem',
+                              fontSize: '0.64rem',
                               fontWeight: 800,
                               color: pos.color,
                               background: pos.badgeBg,
                               border: `1px solid ${pos.border}`,
-                              padding: '1px 4px',
-                              borderRadius: '3px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '2px'
-                            }} title={pos.name}>
+                              gap: '3px'
+                            }} title={`Vị trí: ${pos.name} (Chạm để xem trình độ)`}>
                               <span>{pos.icon}</span>
                               <span>{pos.id}</span>
-                            </span>
-
-                            <span style={{
-                              fontSize: '0.62rem',
-                              fontWeight: 800,
-                              color: rat.color,
-                              background: rat.bg,
-                              border: `1px solid ${rat.border}`,
-                              padding: '1px 4px',
-                              borderRadius: '3px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '2px',
-                              boxShadow: rat.id === 'S' ? '0 0 5px rgba(255, 215, 0, 0.35)' : 'none'
-                            }} title={rat.desc}>
-                              <span>{rat.star}</span>
-                              <span>{rat.id}</span>
                             </span>
                           </div>
                         );
                       })()}
                     </div>
 
-                    {/* Only show Close button when actively transferring */}
-                    {isAdmin && isTransferring && (
-                      <div style={{
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        color: 'var(--emerald)',
-                        background: 'rgba(0, 242, 152, 0.15)',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        border: '1px solid rgba(0, 242, 152, 0.35)'
-                      }}>
-                        <ArrowRightLeft size={10} />
-                        <span>Đóng</span>
-                      </div>
+                    {/* Admin Transfer Button (Quick Toggle) */}
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTransferPlayerId(isTransferring ? null : player.id);
+                        }}
+                        style={{
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          color: isTransferring ? 'var(--emerald)' : '#94A3B8',
+                          background: isTransferring ? 'rgba(0, 242, 152, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+                          padding: '3px 7px',
+                          borderRadius: '4px',
+                          border: isTransferring ? '1px solid rgba(0, 242, 152, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          cursor: 'pointer'
+                        }}
+                        title={isTransferring ? 'Đóng chuyển đội' : 'Đổi đội nhanh'}
+                      >
+                        <ArrowRightLeft size={11} />
+                        <span>{isTransferring ? 'Đóng' : 'Đổi'}</span>
+                      </button>
                     )}
                   </div>
 
                   {/* Collapsible Transfer Options */}
                   {isAdmin && isTransferring && (
-                    <div style={{
-                      marginTop: '8px',
-                      paddingTop: '8px',
-                      borderTop: '1px dashed rgba(255, 255, 255, 0.12)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                      flexWrap: 'wrap',
-                      animation: 'fadeIn 0.15s ease'
-                    }}>
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        marginTop: '8px',
+                        paddingTop: '8px',
+                        borderTop: '1px dashed rgba(255, 255, 255, 0.12)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        flexWrap: 'wrap',
+                        animation: 'fadeIn 0.15s ease'
+                      }}
+                    >
                       <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                         Chuyển <strong style={{ color: '#fff' }}>"{player.name}"</strong> sang:
                       </span>
@@ -890,6 +884,309 @@ export default function TeamDivider({
           </div>
         </div>
       )}
+
+      {/* Sleek Player Profile Modal (Vị trí & Trình độ thi đấu khi chạm vào tên cầu thủ) */}
+      {selectedPlayer && (() => {
+        const selectedPlayerTeam = teamMetadata.find(t => t.id === selectedPlayer.team) || { name: 'Chưa phân đội', color: '#00F298', icon: '⚽' };
+
+        return (
+          <Portal>
+            <div 
+              className="modal-overlay" 
+              onClick={() => setSelectedPlayer(null)}
+            >
+              <div 
+                className="modal-content" 
+                onClick={(e) => e.stopPropagation()} 
+                style={{ 
+                  maxWidth: '380px', 
+                  width: '100%',
+                  maxHeight: 'calc(100dvh - 24px)',
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  boxSizing: 'border-box',
+                  padding: '16px 14px',
+                  animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  background: 'linear-gradient(175deg, #111B2B 0%, #0A101A 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.22)',
+                  borderRadius: '20px',
+                  boxShadow: '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 152, 0.08)',
+                  margin: 'auto'
+                }}
+              >
+                {/* Modal Header */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  marginBottom: '14px', 
+                  paddingBottom: '12px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '11px',
+                      background: `${selectedPlayerTeam.color}25`,
+                      border: `1px solid ${selectedPlayerTeam.color}50`,
+                      color: selectedPlayerTeam.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      boxShadow: `0 4px 14px ${selectedPlayerTeam.color}30`
+                    }}>
+                      {selectedPlayerTeam.icon || '⚽'}
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                          {selectedPlayer.name}
+                        </h3>
+                        <span style={{ 
+                          fontSize: '0.68rem', 
+                          color: selectedPlayerTeam.color, 
+                          background: `${selectedPlayerTeam.color}20`,
+                          border: `1px solid ${selectedPlayerTeam.color}40`,
+                          padding: '1px 7px',
+                          borderRadius: '4px',
+                          fontWeight: 700
+                        }}>
+                          {selectedPlayerTeam.name}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>
+                        Vị trí & Năng lực thi đấu
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlayer(null)}
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.09)',
+                      color: '#94A3B8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+
+                {/* Main Assigned Position Highlight */}
+                {selectedPlayer.position && (
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '10px',
+                    padding: '8px 12px',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '0.78rem'
+                  }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Vị trí xếp trong đội:</span>
+                    {(() => {
+                      const pos = POSITIONS[selectedPlayer.position] || POSITIONS.MF;
+                      const rawTier = (selectedPlayer.skills && selectedPlayer.skills[selectedPlayer.position])
+                        ? selectedPlayer.skills[selectedPlayer.position]
+                        : (selectedPlayer.rating || 'B');
+                      const tierKey = rawTier === 'Ổn' ? 'B' : (rawTier || 'B');
+                      const rat = RATINGS[tierKey] || RATINGS.B;
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{
+                            color: pos.color,
+                            fontWeight: 800,
+                            background: pos.badgeBg,
+                            border: `1px solid ${pos.border}`,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '0.72rem'
+                          }}>
+                            {pos.icon} {pos.name} ({pos.id})
+                          </span>
+                          <span style={{
+                            color: rat.color,
+                            fontWeight: 800,
+                            background: rat.bg,
+                            border: `1px solid ${rat.border}`,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '0.72rem'
+                          }}>
+                            {rat.star} Tier {rat.id}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* 4 Positions Breakdown */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600, paddingLeft: '2px' }}>
+                    Năng lực theo từng vị trí sở trường:
+                  </div>
+                  {['FW', 'MF', 'DF', 'GK'].map(posKey => {
+                    const pos = POSITIONS[posKey] || POSITIONS.MF;
+                    const rawTier = (selectedPlayer.skills && selectedPlayer.skills[posKey])
+                      ? selectedPlayer.skills[posKey]
+                      : (selectedPlayer.position === posKey ? selectedPlayer.rating : 'B');
+                    const tierKey = rawTier === 'Ổn' ? 'B' : (rawTier || 'B');
+                    const tier = RATINGS[tierKey] || RATINGS.B;
+                    const isAssigned = selectedPlayer.position === posKey;
+                    const isHighlight = tierKey === 'S' || tierKey === 'A';
+
+                    return (
+                      <div
+                        key={posKey}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          borderRadius: '12px',
+                          background: isAssigned 
+                            ? `${pos.color}15` 
+                            : (isHighlight ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)'),
+                          border: isAssigned 
+                            ? `1px solid ${pos.color}50` 
+                            : (isHighlight ? `1px solid ${pos.border}` : '1px solid rgba(255, 255, 255, 0.07)')
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.1rem' }}>{pos.icon}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.88rem', color: pos.color }}>
+                              {pos.id}
+                            </span>
+                            <span style={{ fontSize: '0.8rem', color: '#CBD5E1', fontWeight: 600 }}>
+                              {pos.name}
+                            </span>
+                            {isAssigned && (
+                              <span style={{
+                                fontSize: '0.62rem',
+                                color: 'var(--emerald)',
+                                background: 'rgba(0, 242, 152, 0.15)',
+                                border: '1px solid rgba(0, 242, 152, 0.3)',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                fontWeight: 700
+                              }}>
+                                Đang đá
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '4px 10px',
+                          borderRadius: '8px',
+                          background: tier.bg,
+                          border: `1px solid ${tier.border}`,
+                          color: tier.color,
+                          fontWeight: 800,
+                          fontSize: '0.78rem',
+                          boxShadow: tierKey === 'S' ? '0 0 10px rgba(255, 215, 0, 0.25)' : 'none'
+                        }}>
+                          <span>{tier.star}</span>
+                          <span>{tierKey}</span>
+                          <span style={{ opacity: 0.9, fontWeight: 600, fontSize: '0.74rem' }}>
+                            • {tier.name}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Admin Quick Team Transfer Inside Modal */}
+                {isAdmin && onUpdatePlayerTeam && (
+                  <div style={{
+                    marginBottom: '16px',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '8px' }}>
+                      🔄 Chuyển sang đội khác (Admin):
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {activeTeams
+                        .filter(t => t.id !== selectedPlayer.team)
+                        .map(targetT => (
+                          <button
+                            key={targetT.id}
+                            type="button"
+                            onClick={() => {
+                              onUpdatePlayerTeam(selectedPlayer.id, targetT.id);
+                              setSelectedPlayer(prev => prev ? ({ ...prev, team: targetT.id }) : null);
+                              if (showToast) showToast(`Đã chuyển ${selectedPlayer.name} sang ${targetT.name}!`);
+                            }}
+                            style={{
+                              flex: 1,
+                              minWidth: '100px',
+                              background: `${targetT.color}20`,
+                              border: `1px solid ${targetT.color}60`,
+                              borderRadius: '8px',
+                              padding: '8px 10px',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              color: '#fff',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <span>➔</span>
+                            <span>{targetT.icon}</span>
+                            <span>{targetT.name}</span>
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlayer(null)}
+                  className="btn btn-secondary"
+                  style={{
+                    width: '100%',
+                    padding: '11px',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '0.88rem'
+                  }}
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </Portal>
+        );
+      })()}
 
       {/* Modal Preview & Tải Ảnh Chia Đội Gửi Zalo */}
       {showImageModal && (

@@ -647,8 +647,21 @@ body {
 .team-players-grid {
   padding: 8px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 6px;
+}
+
+.team-player-pill {
+  transition: all 0.15s ease;
+}
+
+.team-player-pill:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.team-player-pill:active {
+  transform: scale(0.99);
 }
 
 /* PC / Tablet: Side-by-side Layout (Song song với nhau) */
