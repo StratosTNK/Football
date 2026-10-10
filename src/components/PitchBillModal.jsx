@@ -78,12 +78,36 @@ export default function PitchBillModal({
   const [activeTab, setActiveTab] = useState('bill');
   const [playerFilter, setPlayerFilter] = useState('all'); // 'all' | 'unpaid' | 'paid'
 
-  // Form states
-  const [pitchCost, setPitchCost] = useState(existingBill?.pitchCost ?? 350000);
-  const [drinkCost, setDrinkCost] = useState(existingBill?.drinkCost ?? 70000);
-  const [otherCost, setOtherCost] = useState(existingBill?.otherCost ?? 0);
+  // Form states (allow string for seamless typing/deleting without leading 0)
+  const [pitchCost, setPitchCost] = useState(() => existingBill?.pitchCost != null ? String(existingBill.pitchCost) : '350000');
+  const [drinkCost, setDrinkCost] = useState(() => existingBill?.drinkCost != null ? String(existingBill.drinkCost) : '70000');
+  const [otherCost, setOtherCost] = useState(() => existingBill?.otherCost ? String(existingBill.otherCost) : '');
   const [otherCostNote, setOtherCostNote] = useState(existingBill?.otherCostNote || '');
   const [rounding, setRounding] = useState(existingBill?.rounding || '1k'); // 'none', '1k', '5k'
+
+  // Input change handler preventing leading zero trap (e.g. 01 -> 1) and allowing empty string
+  const handleNumericInput = (setter) => (e) => {
+    let val = e.target.value.trim();
+    if (val === '') {
+      setter('');
+      return;
+    }
+    val = val.replace(/\D/g, '');
+    val = val.replace(/^0+(?=\d)/, '');
+    setter(val);
+  };
+
+  const handleOtherCostInput = (e) => {
+    let val = e.target.value.trim();
+    if (val === '' || val === '-') {
+      setOtherCost(val);
+      return;
+    }
+    const isNeg = val.startsWith('-');
+    let digits = val.replace(/[^\d]/g, '');
+    digits = digits.replace(/^0+(?=\d)/, '');
+    setOtherCost(isNeg ? (digits ? '-' + digits : '-') : digits);
+  };
 
   // Bank states
   const [bankCode, setBankCode] = useState(defaultBank.bankCode || 'MB');
@@ -121,9 +145,9 @@ export default function PitchBillModal({
   }, [players]);
 
   // Calculations
-  const numericPitch = Number(pitchCost) || 0;
-  const numericDrink = Number(drinkCost) || 0;
-  const numericOther = Number(otherCost) || 0;
+  const numericPitch = pitchCost === '' ? 0 : (Number(pitchCost) || 0);
+  const numericDrink = drinkCost === '' ? 0 : (Number(drinkCost) || 0);
+  const numericOther = (otherCost === '' || otherCost === '-') ? 0 : (Number(otherCost) || 0);
   const totalAmount = Math.max(0, numericPitch + numericDrink + numericOther);
 
   const payingCount = payingPlayerIds.size;
@@ -518,15 +542,15 @@ export default function PitchBillModal({
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
                           <span>⚽ Tiền thuê sân (VNĐ):</span>
-                          <strong style={{ color: '#00F298' }}>{formatVND(pitchCost)} đ</strong>
+                          <strong style={{ color: '#00F298' }}>{formatVND(numericPitch)} đ</strong>
                         </div>
                         <input
-                          type="number"
-                          step="10000"
-                          min="0"
+                          type="text"
+                          inputMode="numeric"
                           value={pitchCost}
-                          onChange={(e) => setPitchCost(Math.max(0, Number(e.target.value) || 0))}
-                          placeholder="350000"
+                          onChange={handleNumericInput(setPitchCost)}
+                          onFocus={(e) => e.target.select()}
+                          placeholder="0"
                           style={{
                             width: '100%',
                             padding: '8px 12px',
@@ -545,14 +569,14 @@ export default function PitchBillModal({
                             <button
                               key={amt}
                               type="button"
-                              onClick={() => setPitchCost(amt)}
+                              onClick={() => setPitchCost(String(amt))}
                               style={{
                                 padding: '3px 7px',
                                 fontSize: '0.68rem',
                                 borderRadius: '6px',
-                                border: pitchCost === amt ? '1px solid #00F298' : '1px solid rgba(255, 255, 255, 0.1)',
-                                background: pitchCost === amt ? 'rgba(0, 242, 152, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                                color: pitchCost === amt ? '#00F298' : 'var(--text-muted)',
+                                border: numericPitch === amt ? '1px solid #00F298' : '1px solid rgba(255, 255, 255, 0.1)',
+                                background: numericPitch === amt ? 'rgba(0, 242, 152, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                                color: numericPitch === amt ? '#00F298' : 'var(--text-muted)',
                                 cursor: 'pointer'
                               }}
                             >
@@ -566,15 +590,15 @@ export default function PitchBillModal({
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
                           <span>🥤 Tiền nước / revive (VNĐ):</span>
-                          <strong style={{ color: '#38BDF8' }}>{formatVND(drinkCost)} đ</strong>
+                          <strong style={{ color: '#38BDF8' }}>{formatVND(numericDrink)} đ</strong>
                         </div>
                         <input
-                          type="number"
-                          step="10000"
-                          min="0"
+                          type="text"
+                          inputMode="numeric"
                           value={drinkCost}
-                          onChange={(e) => setDrinkCost(Math.max(0, Number(e.target.value) || 0))}
-                          placeholder="70000"
+                          onChange={handleNumericInput(setDrinkCost)}
+                          onFocus={(e) => e.target.select()}
+                          placeholder="0"
                           style={{
                             width: '100%',
                             padding: '8px 12px',
@@ -593,14 +617,14 @@ export default function PitchBillModal({
                             <button
                               key={amt}
                               type="button"
-                              onClick={() => setDrinkCost(amt)}
+                              onClick={() => setDrinkCost(String(amt))}
                               style={{
                                 padding: '3px 7px',
                                 fontSize: '0.68rem',
                                 borderRadius: '6px',
-                                border: drinkCost === amt ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.1)',
-                                background: drinkCost === amt ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                                color: drinkCost === amt ? '#38BDF8' : 'var(--text-muted)',
+                                border: numericDrink === amt ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.1)',
+                                background: numericDrink === amt ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                                color: numericDrink === amt ? '#38BDF8' : 'var(--text-muted)',
                                 cursor: 'pointer'
                               }}
                             >
@@ -615,15 +639,16 @@ export default function PitchBillModal({
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
                           <span>➕ Phụ phí / Giảm trừ (VNĐ):</span>
                           <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
-                            {otherCost < 0 ? 'Giảm trừ' : 'Cộng thêm'}
+                            {numericOther < 0 ? 'Giảm trừ' : 'Cộng thêm'}
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <input
-                            type="number"
-                            step="5000"
+                            type="text"
+                            inputMode="numeric"
                             value={otherCost}
-                            onChange={(e) => setOtherCost(Number(e.target.value) || 0)}
+                            onChange={handleOtherCostInput}
+                            onFocus={(e) => e.target.select()}
                             placeholder="0"
                             style={{
                               width: '130px',
@@ -691,17 +716,17 @@ export default function PitchBillModal({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Tiền sân:</span>
-                        <strong style={{ color: '#fff' }}>{formatVND(pitchCost)} đ</strong>
+                        <strong style={{ color: '#fff' }}>{formatVND(numericPitch)} đ</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--text-muted)' }}>Tiền nước:</span>
-                        <strong style={{ color: '#fff' }}>{formatVND(drinkCost)} đ</strong>
+                        <strong style={{ color: '#fff' }}>{formatVND(numericDrink)} đ</strong>
                       </div>
-                      {otherCost !== 0 && (
+                      {numericOther !== 0 && (
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--text-muted)' }}>{otherCostNote || 'Khoản khác'}:</span>
-                          <strong style={{ color: otherCost > 0 ? '#FFA502' : '#00F298' }}>
-                            {otherCost > 0 ? `+${formatVND(otherCost)}` : formatVND(otherCost)} đ
+                          <strong style={{ color: numericOther > 0 ? '#FFA502' : '#00F298' }}>
+                            {numericOther > 0 ? `+${formatVND(numericOther)}` : formatVND(numericOther)} đ
                           </strong>
                         </div>
                       )}
