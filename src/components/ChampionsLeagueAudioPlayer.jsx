@@ -29,6 +29,15 @@ export const PLAYLIST = [
     duration: '03:53'
   },
   {
+    id: 'dai-dai',
+    title: 'Dai Dai',
+    artist: 'Shakira & Burna Boy',
+    src: '/dai-dai.mp3',
+    icon: '⚽',
+    tag: 'World Cup 2026',
+    duration: '03:42'
+  },
+  {
     id: 'champions-league',
     title: 'UEFA Champions League Anthem',
     artist: 'Tony Britten',
