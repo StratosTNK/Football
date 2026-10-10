@@ -136,6 +136,7 @@ export default function PitchBillModal({
   const [copiedZalo, setCopiedZalo] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [zoomQR, setZoomQR] = useState(false);
 
   // Auto-sync when player list changes if payingPlayerIds is empty
   useEffect(() => {
@@ -922,44 +923,74 @@ export default function PitchBillModal({
                       {qrUrl && (
                         <div style={{
                           background: 'rgba(0, 0, 0, 0.4)',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(0, 242, 152, 0.2)',
-                          padding: '12px',
+                          borderRadius: '14px',
+                          border: '1px solid rgba(0, 242, 152, 0.25)',
+                          padding: '10px 8px',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          gap: '8px'
+                          gap: '10px',
+                          width: '100%',
+                          boxSizing: 'border-box'
                         }}>
-                          <div style={{
-                            background: '#FFFFFF',
-                            padding: '8px',
-                            borderRadius: '10px',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
+                          <div 
+                            onClick={() => setZoomQR(true)}
+                            style={{
+                              background: '#FFFFFF',
+                              padding: '10px 6px',
+                              borderRadius: '12px',
+                              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.45)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              cursor: 'pointer'
+                            }}
+                            title="Chạm để phóng to mã QR toàn màn hình"
+                          >
                             <img
                               src={qrUrl}
                               alt="VietQR Code"
                               style={{
-                                width: '180px',
+                                width: '100%',
+                                maxWidth: '380px',
                                 height: 'auto',
-                                maxHeight: '230px',
-                                objectFit: 'contain',
-                                display: 'block'
+                                display: 'block',
+                                margin: '0 auto'
                               }}
                               loading="lazy"
                             />
                           </div>
 
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.76rem', color: '#00F298', fontWeight: 700 }}>
+                          <div style={{ textAlign: 'center', width: '100%' }}>
+                            <div style={{ fontSize: '0.82rem', color: '#00F298', fontWeight: 800 }}>
                               Quét QR tự điền số tiền: {formatVND(perPlayer)}đ
                             </div>
-                            <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginTop: '2px' }}>
-                              Nội dung: <strong>{transferMsg}</strong>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '2px' }}>
+                              Nội dung: <strong style={{ color: '#fff' }}>{transferMsg}</strong>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setZoomQR(true)}
+                              style={{
+                                marginTop: '6px',
+                                background: 'rgba(56, 189, 248, 0.1)',
+                                border: '1px solid rgba(56, 189, 248, 0.3)',
+                                borderRadius: '6px',
+                                color: '#38BDF8',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                padding: '4px 10px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}
+                            >
+                              <QrCode size={13} />
+                              <span>Chạm phóng to toàn màn hình</span>
+                            </button>
                           </div>
                         </div>
                       )}
@@ -1383,6 +1414,78 @@ export default function PitchBillModal({
           </div>
         </div>
       </div>
+
+      {/* Fullscreen QR Zoom Modal for easy scanning */}
+      {zoomQR && qrUrl && (
+        <div 
+          onClick={() => setZoomQR(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.94)',
+            zIndex: 999999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            cursor: 'pointer'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#FFFFFF',
+              padding: '16px 12px',
+              borderRadius: '18px',
+              width: '100%',
+              maxWidth: '460px',
+              maxHeight: '90vh',
+              boxShadow: '0 12px 48px rgba(0, 0, 0, 0.85)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <img
+              src={qrUrl}
+              alt="VietQR Code Phóng To"
+              style={{
+                width: '100%',
+                maxHeight: '70vh',
+                objectFit: 'contain',
+                display: 'block'
+              }}
+            />
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.9rem', color: '#080E17', fontWeight: 800 }}>
+                Quét QR tự điền số tiền: {formatVND(perPlayer)}đ
+              </div>
+              <div style={{ fontSize: '0.74rem', color: '#666', marginTop: '2px' }}>
+                Nội dung: <strong>{transferMsg}</strong>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setZoomQR(false)}
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '0.86rem',
+                fontWeight: 800,
+                borderRadius: '10px'
+              }}
+            >
+              Đóng Phóng To
+            </button>
+          </div>
+        </div>
+      )}
     </Portal>
   );
 }
