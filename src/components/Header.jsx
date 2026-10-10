@@ -38,7 +38,7 @@ export default function Header({
       <div className="header-brand-row">
         <div className="header-logo-group">
           <span className="header-ball-icon">⚽</span>
-          <span className="header-app-title">DSU TK FOOTBALL CLUB</span>
+          <span className="header-app-title">DSU-Thanh Khê Club</span>
         </div>
 
         <div className="header-status-badge">
