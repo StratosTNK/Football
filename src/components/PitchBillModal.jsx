@@ -1263,33 +1263,33 @@ export default function PitchBillModal({
             gap: '8px',
             flexShrink: 0
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {/* Copy Zalo Bill */}
-              <button
-                type="button"
-                onClick={handleCopyZalo}
-                className="btn btn-primary"
-                style={{
-                  background: 'linear-gradient(135deg, #0084FF 0%, #0066CC 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '10px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  borderRadius: '10px',
-                  cursor: 'pointer'
-                }}
-              >
-                {copiedZalo ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copiedZalo ? 'Đã Copy!' : 'Copy Bill Zalo'}</span>
-              </button>
+            {isAdmin ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {/* Copy Zalo Bill (Admin only) */}
+                <button
+                  type="button"
+                  onClick={handleCopyZalo}
+                  className="btn btn-primary"
+                  style={{
+                    background: 'linear-gradient(135deg, #0084FF 0%, #0066CC 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    borderRadius: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {copiedZalo ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{copiedZalo ? 'Đã Copy!' : 'Copy Bill Zalo'}</span>
+                </button>
 
-              {/* Save Bill (Admin only) or Close */}
-              {isAdmin ? (
+                {/* Save Bill (Admin only) */}
                 <button
                   type="button"
                   onClick={handleSaveBill}
@@ -1313,17 +1313,25 @@ export default function PitchBillModal({
                   <Save size={14} />
                   <span>{saving ? 'Đang lưu...' : 'Lưu Quyết Toán'}</span>
                 </button>
-              ) : (
+              </div>
+            ) : (
+              <div>
                 <button
                   type="button"
                   onClick={onClose}
                   className="btn btn-secondary"
-                  style={{ padding: '10px', fontSize: '0.82rem', borderRadius: '10px' }}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    borderRadius: '10px'
+                  }}
                 >
                   Đóng
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {isAdmin && existingBill && (
               <button
