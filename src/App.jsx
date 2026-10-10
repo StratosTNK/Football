@@ -11,6 +11,7 @@ import AdminPanel from './components/AdminPanel';
 import ChampionsLeagueAudioPlayer, { PLAYLIST } from './components/ChampionsLeagueAudioPlayer';
 import MusicPlayerModal from './components/MusicPlayerModal';
 import PitchFinderModal from './components/PitchFinderModal';
+import PitchBillModal from './components/PitchBillModal';
 import Portal from './components/Portal';
 import { Shirt, ListChecks, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
 
@@ -31,6 +32,7 @@ export default function App() {
       status: "OPEN",
       players: [],
       defaultTrackId: "waka-waka",
+      pitchBill: null,
       hasPasswordSet: true
     };
   });
@@ -143,6 +145,7 @@ export default function App() {
   const [viewTab, setViewTab] = useState('teams'); // 'teams' | 'list'
   const [showSplitModal, setShowSplitModal] = useState(false);
   const [showPitchFinder, setShowPitchFinder] = useState(false);
+  const [showPitchBillModal, setShowPitchBillModal] = useState(false);
   const [splitCardOpen, setSplitCardOpen] = useState(false);
 
   const handleToggleSplit = () => {
@@ -354,6 +357,11 @@ export default function App() {
     return adminFetch('/api/admin/update-match', matchPayload);
   };
 
+  // 5b. Admin Update Pitch Bill
+  const handleUpdatePitchBill = async (pitchBill) => {
+    return adminFetch('/api/admin/update-pitch-bill', { pitchBill });
+  };
+
   // 6. Admin Random Split
   const handleRandomSplit = async (teamCount) => {
     const data = await adminFetch('/api/admin/random-split', { teamCount });
@@ -512,6 +520,7 @@ export default function App() {
                 onResetTeams={handleResetTeams}
                 onUpdatePlayerTeam={handleUpdatePlayerTeam}
                 showToast={showToast}
+                onOpenPitchBill={() => setShowPitchBillModal(true)}
               />
             ) : (
               <div>
@@ -531,6 +540,7 @@ export default function App() {
                   showToast={showToast}
                   externalSplitOpen={splitCardOpen}
                   setExternalSplitOpen={setSplitCardOpen}
+                  onOpenPitchBill={() => setShowPitchBillModal(true)}
                 />
               </div>
             )}
@@ -555,6 +565,7 @@ export default function App() {
               showToast={showToast}
               externalSplitOpen={splitCardOpen}
               setExternalSplitOpen={setSplitCardOpen}
+              onOpenPitchBill={() => setShowPitchBillModal(true)}
             />
           </div>
         )}
@@ -765,6 +776,16 @@ export default function App() {
             showToast={showToast}
           />
         )}
+
+        {/* Pitch Bill Split Modal */}
+        <PitchBillModal
+          isOpen={showPitchBillModal}
+          onClose={() => setShowPitchBillModal(false)}
+          match={match}
+          isAdmin={isAdmin}
+          onSaveBill={handleUpdatePitchBill}
+          showToast={showToast}
+        />
 
         {/* Music Playlist & Controller Modal */}
         <MusicPlayerModal

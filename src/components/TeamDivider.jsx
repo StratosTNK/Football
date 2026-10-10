@@ -12,7 +12,8 @@ import {
   Download,
   FileText,
   X,
-  Loader2
+  Loader2,
+  Receipt
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { formatTeamsForZalo, formatDateDMY } from '../utils/zaloFormatter';
@@ -25,7 +26,8 @@ export default function TeamDivider({
   onRandomSplit, 
   onResetTeams, 
   onUpdatePlayerTeam, 
-  showToast 
+  showToast,
+  onOpenPitchBill
 }) {
   const { players = [], teamCount = 2 } = match;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -494,6 +496,33 @@ export default function TeamDivider({
             <span>{exportingImage ? 'Đang tạo...' : 'Xuất Ảnh'}</span>
           </button>
 
+          {/* Quick Button to Pitch Bill */}
+          {(isAdmin || (match?.pitchBill && match.pitchBill.totalAmount > 0)) && onOpenPitchBill && (
+            <button
+              type="button"
+              onClick={onOpenPitchBill}
+              className="btn btn-secondary"
+              style={{
+                padding: '6px 11px',
+                fontSize: '0.78rem',
+                borderRadius: 'var(--radius-sm)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: 'linear-gradient(135deg, rgba(255, 184, 0, 0.18), rgba(255, 138, 0, 0.12))',
+                border: '1px solid rgba(255, 184, 0, 0.45)',
+                color: '#FFB800',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+              title={isAdmin ? "Thanh toán & chia tiền sân, tiền nước cho anh em" : "Xem bảng chia tiền sân & mã QR chuyển khoản"}
+            >
+              <Receipt size={13} />
+              <span>{match?.pitchBill?.perPlayer ? `Tiền Sân (${Math.round(match.pitchBill.perPlayer / 1000)}k)` : 'Tiền Sân'}</span>
+            </button>
+          )}
+
           {isAdmin && (
             <div style={{ position: 'relative' }}>
               <button
@@ -666,7 +695,32 @@ export default function TeamDivider({
                     <span>Copy dạng chữ (Text) gửi Zalo</span>
                   </button>
 
-                  {/* Option 5: Hủy phân đội */}
+                  {/* Option 5: Chia tiền sân & nước */}
+                  {onOpenPitchBill && (
+                    <button
+                      type="button"
+                      onClick={() => { onOpenPitchBill(); setMenuOpen(false); }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '9px 10px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: 'rgba(255, 184, 0, 0.1)',
+                        color: '#FFB800',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <Receipt size={14} />
+                      <span>Chia tiền sân & tiền nước</span>
+                    </button>
+                  )}
+
+                  {/* Option 6: Hủy phân đội */}
                   <button
                     type="button"
                     onClick={() => { onResetTeams(); setMenuOpen(false); }}

@@ -29,6 +29,7 @@ const getDefaultMatchState = () => {
     adminPassword: "admin123",
     players: [],
     defaultTrackId: "waka-waka",
+    pitchBill: null,
     lastUpdated: new Date().toISOString()
   };
 };
@@ -360,7 +361,7 @@ export async function onRequest(context) {
       }
 
       const body = await getBody();
-      const { title, stadium, location, matchDate, matchTime, maxPlayers, notes, status, teamCount, defaultTrackId } = body;
+      const { title, stadium, location, matchDate, matchTime, maxPlayers, notes, status, teamCount, defaultTrackId, pitchBill } = body;
 
       if (title !== undefined) state.title = title;
       if (stadium !== undefined) state.stadium = stadium;
@@ -372,6 +373,7 @@ export async function onRequest(context) {
       if (status !== undefined) state.status = status;
       if (teamCount !== undefined) state.teamCount = Number(teamCount);
       if (defaultTrackId !== undefined) state.defaultTrackId = defaultTrackId;
+      if (pitchBill !== undefined) state.pitchBill = pitchBill;
 
       await putState(env, state);
       return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
@@ -389,6 +391,19 @@ export async function onRequest(context) {
         state.defaultTrackId = trackId;
         await putState(env, state);
       }
+
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
+    }
+
+    // 5c. POST /api/admin/update-pitch-bill
+    if (method === 'POST' && pathname === '/api/admin/update-pitch-bill') {
+      if (!verifyAdmin(request, state)) {
+        return new Response(JSON.stringify({ success: false, message: 'Chưa xác thực quyền Admin!' }), { status: 403, headers: corsHeaders });
+      }
+
+      const body = await getBody();
+      state.pitchBill = body.pitchBill !== undefined ? body.pitchBill : null;
+      await putState(env, state);
 
       return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
@@ -552,6 +567,7 @@ export async function onRequest(context) {
 
       state.players = [];
       state.status = 'OPEN';
+      state.pitchBill = null;
 
       await putState(env, state);
       return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });

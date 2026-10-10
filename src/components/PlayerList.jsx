@@ -10,7 +10,8 @@ import {
   Crosshair,
   Activity,
   Shield,
-  Hand
+  Hand,
+  Receipt
 } from 'lucide-react';
 import { POSITIONS, RATINGS, derivePlayerAttributes } from '../utils/teamBalancer';
 import Portal from './Portal';
@@ -89,7 +90,8 @@ export default function PlayerList({
   onRandomSplit, 
   showToast,
   externalSplitOpen,
-  setExternalSplitOpen
+  setExternalSplitOpen,
+  onOpenPitchBill
 }) {
   const { players = [] } = match;
   const [editingPlayer, setEditingPlayer] = useState(null);
@@ -204,28 +206,57 @@ export default function PlayerList({
           </h3>
         </div>
 
-        {/* Small button like header to toggle the split card */}
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={() => setShowSplitCard(!showSplitCard)}
-            className="btn btn-header btn-header-music-on"
-            style={{
-              padding: '5px 12px',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-sm)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            <Shuffle size={13} />
-            <span>Chia Đội</span>
-            <span style={{ fontSize: '0.62rem', transform: showSplitCard ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
-          </button>
-        )}
+        {/* Header Actions: Pitch Bill + Chia Đội */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          {/* Thanh toán tiền sân button */}
+          {(isAdmin || (match?.pitchBill && match.pitchBill.totalAmount > 0)) && (
+            <button
+              type="button"
+              onClick={onOpenPitchBill}
+              className="btn btn-header"
+              style={{
+                padding: '5px 11px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-sm)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: 'linear-gradient(135deg, rgba(255, 184, 0, 0.18), rgba(255, 138, 0, 0.12))',
+                border: '1px solid rgba(255, 184, 0, 0.45)',
+                color: '#FFB800',
+                cursor: 'pointer'
+              }}
+              title={isAdmin ? "Thanh toán & chia tiền sân, tiền nước cho anh em" : "Xem bảng chia tiền sân & mã QR chuyển khoản"}
+            >
+              <Receipt size={13} />
+              <span>{match?.pitchBill?.perPlayer ? `Tiền Sân (${Math.round(match.pitchBill.perPlayer / 1000)}k)` : 'Thanh Toán Tiền Sân'}</span>
+            </button>
+          )}
+
+          {/* Small button like header to toggle the split card */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowSplitCard(!showSplitCard)}
+              className="btn btn-header btn-header-music-on"
+              style={{
+                padding: '5px 12px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-sm)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              <Shuffle size={13} />
+              <span>Chia Đội</span>
+              <span style={{ fontSize: '0.62rem', transform: showSplitCard ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', display: 'inline-block' }}>▼</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Admin Team Division Section (Only unfolded when showSplitCard is true) */}

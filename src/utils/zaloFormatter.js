@@ -133,3 +133,58 @@ export const formatTeamsForZalo = (match) => {
   text += `\n👉 Link xem & cập nhật trực tiếp: ${currentUrl}`;
   return text;
 };
+
+/**
+ * Format pitch fee & drinks bill into ready-to-paste text for Zalo / Messenger
+ */
+export const formatPitchBillForZalo = (match, bill) => {
+  if (!match || !bill) return '';
+
+  const { title, stadium, matchDate, matchTime } = match;
+  const clubName = 'DSU-THANH KHÊ CLUB';
+  const matchTitle = (title || 'GIAO HỮU BÓNG ĐÁ').toUpperCase();
+  const dateFormatted = formatDateDMY(matchDate);
+  const timeStr = matchTime || '';
+  const stadiumStr = stadium || '';
+
+  const pitchCost = Number(bill.pitchCost) || 0;
+  const drinkCost = Number(bill.drinkCost) || 0;
+  const otherCost = Number(bill.otherCost) || 0;
+  const totalAmount = Number(bill.totalAmount) || 0;
+  const payingCount = Number(bill.payingCount) || 1;
+  const perPlayer = Number(bill.perPlayer) || 0;
+  const bank = bill.bank || {};
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : 'http://localhost/';
+
+  const formatVND = (num) => new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+
+  let text = `⚽ ${clubName} ⚽\n`;
+  text += `🧾 QUYẾT TOÁN TIỀN SÂN & NƯỚC UỐNG\n`;
+  text += `📅 Ngày đá: ${dateFormatted} • ⏰ ${timeStr}\n`;
+  if (stadiumStr) text += `📍 Sân: ${stadiumStr}\n`;
+  text += `────────────────────\n`;
+  text += `💰 Tiền sân: ${formatVND(pitchCost)}\n`;
+  if (drinkCost > 0) text += `🥤 Tiền nước: ${formatVND(drinkCost)}\n`;
+  if (otherCost !== 0) {
+    text += `${otherCost > 0 ? '➕ Phụ phí' : '➖ Giảm trừ'}: ${formatVND(Math.abs(otherCost))}\n`;
+  }
+  text += `👉 TỔNG CỘNG: ${formatVND(totalAmount)}\n`;
+  text += `👥 Số người chia: ${payingCount} cầu thủ\n`;
+  text += `💵 MỖI NGƯỜI: ${formatVND(perPlayer)}\n`;
+
+  if (bank.accountNo && bank.bankName) {
+    text += `────────────────────\n`;
+    text += `💳 THÔNG TIN CHUYỂN KHOẢN:\n`;
+    text += `🏦 Ngân hàng: ${bank.bankName}\n`;
+    text += `🔢 STK: ${bank.accountNo}\n`;
+    if (bank.accountName) text += `👤 Tên chủ TK: ${bank.accountName.toUpperCase()}\n`;
+    if (bank.transferContent) text += `📝 Nội dung: ${bank.transferContent}\n`;
+    if (bill.qrUrl) text += `📲 Link quét mã QR: ${bill.qrUrl}\n`;
+  }
+
+  text += `────────────────────\n`;
+  text += `Anh em chuyển khoản sớm giúp thủ quỹ nhé! Cảm ơn anh em! ⚽🔥\n`;
+  text += `👉 Xem chi tiết trên web: ${currentUrl}`;
+
+  return text;
+};
