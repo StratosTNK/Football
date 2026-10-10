@@ -203,8 +203,15 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
 
   const seek = (timeSec) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = timeSec;
-      setCurrentTime(timeSec);
+      const dur = audioRef.current.duration;
+      const maxVal = dur && !isNaN(dur) ? dur : 9999;
+      const validTime = Math.max(0, Math.min(maxVal, Number(timeSec) || 0));
+      try {
+        audioRef.current.currentTime = validTime;
+      } catch (err) {
+        console.error('Seek error:', err);
+      }
+      setCurrentTime(validTime);
     }
   };
 
@@ -229,7 +236,9 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
     currentTrack: PLAYLIST[currentTrackIndex],
     currentTime,
     duration,
-    volume
+    volume,
+    getAudioElement: () => audioRef.current,
+    audioElement: audioRef.current
   }));
 
   useEffect(() => {

@@ -776,8 +776,7 @@ export default function App() {
           onNextTrack={handleNextTrack}
           onPrevTrack={handlePrevTrack}
           onSelectTrack={handleSelectTrack}
-          currentTime={audioRef.current?.currentTime || 0}
-          duration={audioRef.current?.duration || 0}
+          audioRef={audioRef}
           onSeek={handleSeek}
           volume={audioRef.current?.volume ?? 0.85}
           onVolumeChange={handleVolumeChange}

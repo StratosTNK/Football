@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Pause, 
@@ -25,8 +25,7 @@ export default function MusicPlayerModal({
   onNextTrack,
   onPrevTrack,
   onSelectTrack,
-  currentTime = 0,
-  duration = 0,
+  audioRef,
   onSeek,
   volume = 0.85,
   onVolumeChange,
@@ -38,14 +37,118 @@ export default function MusicPlayerModal({
 
   const currentTrack = PLAYLIST[currentTrackIndex] || PLAYLIST[0];
 
+  // Helper to parse preconfigured "mm:ss" duration from PLAYLIST
+  const parseDurationString = (str) => {
+    if (!str) return 0;
+    const parts = str.split(':').map(Number);
+    if (parts.length === 2) {
+      return (parts[0] || 0) * 60 + (parts[1] || 0);
+    }
+    return Number(str) || 0;
+  };
+
+  const fallbackDuration = parseDurationString(currentTrack.duration);
+
+  // Local real-time audio progress synchronized directly with native audio events
+  const [internalTime, setInternalTime] = useState(0);
+  const [internalDuration, setInternalDuration] = useState(fallbackDuration || 0);
+
+  // Scrubbing (dragging) state for silky-smooth response
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubTime, setScrubTime] = useState(0);
+  const isScrubbingRef = useRef(false);
+  const scrubTimeRef = useRef(0);
+
+  // Update duration when track changes
+  useEffect(() => {
+    const fDur = parseDurationString(currentTrack.duration);
+    setInternalDuration(fDur || 0);
+
+    const audio = audioRef?.current?.getAudioElement?.() || audioRef?.current?.audioElement;
+    if (audio) {
+      setInternalTime(audio.currentTime || 0);
+      if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+        setInternalDuration(audio.duration);
+      }
+    } else {
+      setInternalTime(0);
+    }
+  }, [currentTrackIndex, currentTrack.duration, audioRef]);
+
+  // Synchronize directly with HTML5 Audio element events with zero lag
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const audio = audioRef?.current?.getAudioElement?.() || audioRef?.current?.audioElement;
+    if (!audio) return;
+
+    const syncAudio = () => {
+      if (!isScrubbingRef.current) {
+        setInternalTime(audio.currentTime || 0);
+        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+          setInternalDuration(audio.duration);
+        }
+      }
+    };
+
+    audio.addEventListener('timeupdate', syncAudio);
+    audio.addEventListener('loadedmetadata', syncAudio);
+    audio.addEventListener('durationchange', syncAudio);
+    audio.addEventListener('play', syncAudio);
+    audio.addEventListener('pause', syncAudio);
+    audio.addEventListener('seeked', syncAudio);
+    audio.addEventListener('ended', syncAudio);
+
+    // Initial read
+    syncAudio();
+
+    return () => {
+      audio.removeEventListener('timeupdate', syncAudio);
+      audio.removeEventListener('loadedmetadata', syncAudio);
+      audio.removeEventListener('durationchange', syncAudio);
+      audio.removeEventListener('play', syncAudio);
+      audio.removeEventListener('pause', syncAudio);
+      audio.removeEventListener('seeked', syncAudio);
+      audio.removeEventListener('ended', syncAudio);
+    };
+  }, [isOpen, audioRef, currentTrackIndex]);
+
+  // Global mouseup/touchend release to ensure smooth drag completion anywhere on screen
+  useEffect(() => {
+    if (!isScrubbing) return;
+
+    const handleGlobalRelease = () => {
+      if (isScrubbingRef.current) {
+        isScrubbingRef.current = false;
+        setIsScrubbing(false);
+        const finalTime = scrubTimeRef.current;
+        if (onSeek) onSeek(finalTime);
+      }
+    };
+
+    window.addEventListener('mouseup', handleGlobalRelease);
+    window.addEventListener('touchend', handleGlobalRelease);
+    window.addEventListener('touchcancel', handleGlobalRelease);
+
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalRelease);
+      window.removeEventListener('touchend', handleGlobalRelease);
+      window.removeEventListener('touchcancel', handleGlobalRelease);
+    };
+  }, [isScrubbing, onSeek]);
+
   const formatTime = (secs) => {
-    if (!secs || isNaN(secs)) return '0:00';
+    if (!secs || isNaN(secs) || secs < 0) return '0:00';
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const effectiveDuration = internalDuration > 0 ? internalDuration : (fallbackDuration || 100);
+  const displayCurrentTime = isScrubbing ? scrubTime : internalTime;
+  const progressPercent = effectiveDuration > 0 
+    ? Math.max(0, Math.min(100, (displayCurrentTime / effectiveDuration) * 100))
+    : 0;
 
   return (
     <Portal>
@@ -200,26 +303,69 @@ export default function MusicPlayerModal({
             <div style={{ marginTop: '14px', marginBottom: '6px' }}>
               <input 
                 type="range"
+                className="music-scrubber"
                 min="0"
-                max={duration || 100}
-                value={currentTime || 0}
-                onChange={(e) => onSeek && onSeek(Number(e.target.value))}
+                max={effectiveDuration || 100}
+                step="0.1"
+                value={displayCurrentTime || 0}
+                onMouseDown={(e) => {
+                  isScrubbingRef.current = true;
+                  setIsScrubbing(true);
+                  const val = parseFloat(e.target.value);
+                  setScrubTime(val);
+                  scrubTimeRef.current = val;
+                }}
+                onTouchStart={(e) => {
+                  isScrubbingRef.current = true;
+                  setIsScrubbing(true);
+                  const val = parseFloat(e.target.value);
+                  setScrubTime(val);
+                  scrubTimeRef.current = val;
+                }}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  setScrubTime(val);
+                  scrubTimeRef.current = val;
+                  if (!isScrubbingRef.current) {
+                    if (onSeek) onSeek(val);
+                  }
+                }}
+                onMouseUp={(e) => {
+                  if (isScrubbingRef.current) {
+                    isScrubbingRef.current = false;
+                    setIsScrubbing(false);
+                    const val = parseFloat(e.target.value);
+                    if (onSeek) onSeek(val);
+                  }
+                }}
+                onTouchEnd={() => {
+                  if (isScrubbingRef.current) {
+                    isScrubbingRef.current = false;
+                    setIsScrubbing(false);
+                    if (onSeek) onSeek(scrubTimeRef.current);
+                  }
+                }}
                 style={{
-                  width: '100%',
-                  accentColor: 'var(--emerald)',
-                  cursor: 'pointer',
-                  height: '4px'
+                  background: `linear-gradient(to right, #00F298 0%, #00F298 ${progressPercent}%, rgba(255, 255, 255, 0.16) ${progressPercent}%, rgba(255, 255, 255, 0.16) 100%)`
                 }}
               />
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontSize: '0.7rem',
-                color: 'var(--text-muted)',
-                marginTop: '4px'
+                fontSize: '0.72rem',
+                fontVariantNumeric: 'tabular-nums',
+                color: '#94A3B8',
+                marginTop: '6px',
+                fontWeight: 600
               }}>
-                <span>{formatTime(currentTime)}</span>
-                <span>{formatTime(duration)}</span>
+                <span style={{ 
+                  color: isScrubbing ? '#00F298' : '#CBD5E1', 
+                  fontWeight: isScrubbing ? 800 : 600,
+                  transition: 'color 0.15s ease' 
+                }}>
+                  {formatTime(displayCurrentTime)}
+                </span>
+                <span>{formatTime(effectiveDuration)}</span>
               </div>
             </div>
 
