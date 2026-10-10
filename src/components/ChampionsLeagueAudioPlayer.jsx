@@ -20,6 +20,15 @@ export const PLAYLIST = [
     duration: '03:15'
   },
   {
+    id: 'magic-in-the-air',
+    title: 'Magic In The Air',
+    artist: 'Magic System ft. Ahmed Chawki',
+    src: '/magic-in-the-air.mp3',
+    icon: '✨',
+    tag: 'Football Anthem',
+    duration: '03:53'
+  },
+  {
     id: 'champions-league',
     title: 'UEFA Champions League Anthem',
     artist: 'Tony Britten',
