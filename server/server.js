@@ -27,6 +27,7 @@ const getPublicState = () => {
   const { adminPassword, ...publicData } = matchState;
   return {
     ...publicData,
+    defaultTrackId: matchState.defaultTrackId || 'waka-waka',
     hasPasswordSet: Boolean(adminPassword)
   };
 };
@@ -117,7 +118,7 @@ app.post('/api/admin/update-match', (req, res) => {
     return res.status(403).json({ success: false, message: 'Chưa xác thực quyền Admin!' });
   }
 
-  const { title, stadium, location, matchDate, matchTime, maxPlayers, notes, status, teamCount } = req.body;
+  const { title, stadium, location, matchDate, matchTime, maxPlayers, notes, status, teamCount, defaultTrackId } = req.body;
 
   if (title !== undefined) matchState.title = title;
   if (stadium !== undefined) matchState.stadium = stadium;
@@ -128,9 +129,26 @@ app.post('/api/admin/update-match', (req, res) => {
   if (notes !== undefined) matchState.notes = notes;
   if (status !== undefined) matchState.status = status;
   if (teamCount !== undefined) matchState.teamCount = Number(teamCount);
+  if (defaultTrackId !== undefined) matchState.defaultTrackId = defaultTrackId;
 
   saveMatchData(matchState);
   io.emit('match_updated', getPublicState());
+
+  res.json({ success: true, data: getPublicState() });
+});
+
+// 2b. Set Default Track (Music)
+app.post('/api/admin/set-default-track', (req, res) => {
+  if (!verifyAdmin(req)) {
+    return res.status(403).json({ success: false, message: 'Chưa xác thực quyền Admin!' });
+  }
+
+  const { trackId } = req.body;
+  if (trackId) {
+    matchState.defaultTrackId = trackId;
+    saveMatchData(matchState);
+    io.emit('match_updated', getPublicState());
+  }
 
   res.json({ success: true, data: getPublicState() });
 });

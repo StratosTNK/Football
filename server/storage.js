@@ -29,6 +29,7 @@ const getDefaultMatchState = () => {
     status: "OPEN", // OPEN, BALANCED, LOCKED
     notes: "Anh em đến sớm 10 phút để khởi động và mặc áo theo đội. Mang giày đinh dăm TF!",
     adminPassword: "admin123", // Mật khẩu quản trị duy nhất
+    defaultTrackId: "waka-waka",
     players: [
       { id: "p1", name: "Nguyễn Tuấn", note: "Đến đúng giờ", team: 0, createdAt: new Date(Date.now() - 3600000).toISOString() },
       { id: "p2", name: "Trần Minh Khoa", note: "Đem 2 quả bóng", team: 0, createdAt: new Date(Date.now() - 3000000).toISOString() },

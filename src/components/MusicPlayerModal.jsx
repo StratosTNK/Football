@@ -9,7 +9,9 @@ import {
   X, 
   Music, 
   Disc3, 
-  CheckCircle2 
+  CheckCircle2,
+  Crown,
+  Star
 } from 'lucide-react';
 import Portal from './Portal';
 import { PLAYLIST } from './ChampionsLeagueAudioPlayer';
@@ -27,7 +29,10 @@ export default function MusicPlayerModal({
   duration = 0,
   onSeek,
   volume = 0.85,
-  onVolumeChange
+  onVolumeChange,
+  isAdmin = false,
+  defaultTrackId = 'waka-waka',
+  onSetDefaultTrack
 }) {
   if (!isOpen) return null;
 
@@ -294,6 +299,38 @@ export default function MusicPlayerModal({
 
           {/* Playlist Selection List */}
           <div style={{ marginBottom: '16px' }}>
+            {/* Admin Guidance Banner */}
+            {isAdmin && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(16, 185, 129, 0.08) 100%)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                borderRadius: '12px',
+                padding: '9px 12px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '8px',
+                  background: 'rgba(245, 158, 11, 0.22)',
+                  border: '1px solid rgba(245, 158, 11, 0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FCD34D',
+                  flexShrink: 0
+                }}>
+                  <Crown size={15} />
+                </div>
+                <div style={{ fontSize: '0.73rem', color: '#E2E8F0', lineHeight: 1.4 }}>
+                  <strong style={{ color: '#FDE68A' }}>Quyền Quản Trị:</strong> Bấm <strong style={{ color: '#FCD34D' }}>"Đặt phát trước"</strong> ở bài hát bạn muốn để bất kỳ ai vào web hoặc khi làm mới trận đều nghe bài đó đầu tiên.
+                </div>
+              </div>
+            )}
+
             <div style={{
               fontSize: '0.76rem',
               fontWeight: 700,
@@ -310,6 +347,7 @@ export default function MusicPlayerModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {PLAYLIST.map((track, idx) => {
                 const isSelected = idx === currentTrackIndex;
+                const isDefault = (defaultTrackId || 'waka-waka') === track.id;
 
                 return (
                   <div
@@ -323,10 +361,14 @@ export default function MusicPlayerModal({
                       borderRadius: '12px',
                       background: isSelected 
                         ? 'rgba(0, 242, 152, 0.12)' 
-                        : 'rgba(255, 255, 255, 0.03)',
+                        : isDefault
+                          ? 'rgba(245, 158, 11, 0.05)'
+                          : 'rgba(255, 255, 255, 0.03)',
                       border: isSelected 
                         ? '1px solid rgba(0, 242, 152, 0.4)' 
-                        : '1px solid rgba(255, 255, 255, 0.08)',
+                        : isDefault
+                          ? '1px solid rgba(245, 158, 11, 0.35)'
+                          : '1px solid rgba(255, 255, 255, 0.08)',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
@@ -336,8 +378,16 @@ export default function MusicPlayerModal({
                         width: '32px',
                         height: '32px',
                         borderRadius: '8px',
-                        background: isSelected ? 'rgba(0, 242, 152, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                        border: isSelected ? '1px solid rgba(0, 242, 152, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: isSelected 
+                          ? 'rgba(0, 242, 152, 0.2)' 
+                          : isDefault
+                            ? 'rgba(245, 158, 11, 0.15)'
+                            : 'rgba(255, 255, 255, 0.05)',
+                        border: isSelected 
+                          ? '1px solid rgba(0, 242, 152, 0.4)' 
+                          : isDefault
+                            ? '1px solid rgba(245, 158, 11, 0.35)'
+                            : '1px solid rgba(255, 255, 255, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -368,31 +418,89 @@ export default function MusicPlayerModal({
                       </div>
                     </div>
 
-                    <div style={{ flexShrink: 0, marginLeft: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {isSelected ? (
+                    <div style={{ 
+                      flexShrink: 0, 
+                      marginLeft: '8px', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'flex-end', 
+                      gap: '4px' 
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {isSelected ? (
+                          <span style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            color: 'var(--emerald)',
+                            background: 'rgba(0, 242, 152, 0.15)',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(0, 242, 152, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}>
+                            {isPlaying ? '▶ Đang phát' : '⏸ Đang chọn'}
+                          </span>
+                        ) : (
+                          <span style={{
+                            fontSize: '0.72rem',
+                            color: 'var(--text-dim)',
+                            fontWeight: 600
+                          }}>
+                            {track.duration}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Default Track Indicator or Admin Designation Button */}
+                      {isDefault ? (
                         <span style={{
-                          fontSize: '0.68rem',
+                          fontSize: '0.64rem',
                           fontWeight: 800,
-                          color: 'var(--emerald)',
-                          background: 'rgba(0, 242, 152, 0.15)',
-                          padding: '3px 8px',
+                          color: '#FCD34D',
+                          background: 'rgba(245, 158, 11, 0.18)',
+                          border: '1px solid rgba(245, 158, 11, 0.45)',
+                          padding: '2px 6px',
                           borderRadius: '6px',
-                          border: '1px solid rgba(0, 242, 152, 0.3)',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '3px'
+                          gap: '3px',
+                          whiteSpace: 'nowrap'
                         }}>
-                          {isPlaying ? '▶ Đang phát' : '⏸ Đang chọn'}
+                          <Crown size={10} color="#FCD34D" />
+                          <span>Phát đầu tiên</span>
                         </span>
-                      ) : (
-                        <span style={{
-                          fontSize: '0.72rem',
-                          color: 'var(--text-dim)',
-                          fontWeight: 600
-                        }}>
-                          {track.duration}
-                        </span>
-                      )}
+                      ) : isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onSetDefaultTrack) {
+                              onSetDefaultTrack(track.id);
+                            }
+                          }}
+                          style={{
+                            padding: '2px 7px',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: '1px solid rgba(245, 158, 11, 0.35)',
+                            color: '#FDE68A',
+                            fontSize: '0.64rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.15s ease'
+                          }}
+                          title="Chỉ định bài này làm bài phát đầu tiên cho tất cả thành viên khi vào web / reset"
+                        >
+                          <Star size={10} fill="#F59E0B" color="#F59E0B" />
+                          <span>Đặt phát trước</span>
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 );

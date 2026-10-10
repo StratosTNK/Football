@@ -39,14 +39,21 @@ export const PLAYLIST = [
   }
 ];
 
-const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTrackChange }, ref) => {
+const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTrackChange, defaultTrackId = 'waka-waka' }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
     try {
-      const saved = localStorage.getItem('football_music_track_idx');
-      if (saved !== null) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 0 && parsed < PLAYLIST.length) return parsed;
+      // Check if user manually picked a track in this session
+      const manualTrack = sessionStorage.getItem('football_user_manual_track');
+      if (manualTrack === 'true') {
+        const saved = localStorage.getItem('football_music_track_idx');
+        if (saved !== null) {
+          const parsed = parseInt(saved, 10);
+          if (!isNaN(parsed) && parsed >= 0 && parsed < PLAYLIST.length) return parsed;
+        }
+      } else if (defaultTrackId) {
+        const defIdx = PLAYLIST.findIndex(t => t.id === defaultTrackId);
+        if (defIdx !== -1) return defIdx;
       }
     } catch {}
     return 0; // Default to Waka Waka
@@ -66,8 +73,45 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
 
   const audioRef = useRef(null);
   const userMutedRef = useRef(false);
+  const lastDefaultTrackRef = useRef(defaultTrackId);
 
   const currentTrack = PLAYLIST[currentTrackIndex] || PLAYLIST[0];
+
+  // Sync when defaultTrackId changes (e.g. from Admin or when match data loads from server)
+  useEffect(() => {
+    if (!defaultTrackId) return;
+    const targetIdx = PLAYLIST.findIndex(t => t.id === defaultTrackId);
+    if (targetIdx === -1) return;
+
+    let hasManual = false;
+    try {
+      hasManual = sessionStorage.getItem('football_user_manual_track') === 'true';
+    } catch {}
+
+    const defaultChanged = lastDefaultTrackRef.current !== defaultTrackId;
+    lastDefaultTrackRef.current = defaultTrackId;
+
+    // If default track changed or user hasn't explicitly selected another song this session:
+    if (defaultChanged || !hasManual) {
+      if (currentTrackIndex !== targetIdx) {
+        setCurrentTrackIndex(targetIdx);
+        if (onTrackChange) onTrackChange(targetIdx);
+        try {
+          localStorage.setItem('football_music_track_idx', String(targetIdx));
+        } catch {}
+
+        const audio = audioRef.current;
+        if (audio) {
+          const wasPlaying = isPlaying;
+          audio.src = PLAYLIST[targetIdx].src;
+          audio.currentTime = 0;
+          if (wasPlaying && !userMutedRef.current) {
+            audio.play().catch(() => {});
+          }
+        }
+      }
+    }
+  }, [defaultTrackId]);
 
   const startPlaying = () => {
     if (audioRef.current && !userMutedRef.current) {
@@ -101,13 +145,16 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
     }
   };
 
-  const selectTrack = (index, notify = true) => {
+  const selectTrack = (index, notify = true, isManual = true) => {
     const validIdx = (index + PLAYLIST.length) % PLAYLIST.length;
     setCurrentTrackIndex(validIdx);
     if (onTrackChange) onTrackChange(validIdx);
 
     try {
       localStorage.setItem('football_music_track_idx', String(validIdx));
+      if (isManual) {
+        sessionStorage.setItem('football_user_manual_track', 'true');
+      }
     } catch {}
 
     const audio = audioRef.current;
@@ -127,11 +174,11 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
   };
 
   const nextTrack = (notify = true) => {
-    selectTrack(currentTrackIndex + 1, notify);
+    selectTrack(currentTrackIndex + 1, notify, true);
   };
 
   const prevTrack = (notify = true) => {
-    selectTrack(currentTrackIndex - 1, notify);
+    selectTrack(currentTrackIndex - 1, notify, true);
   };
 
   const setVolume = (val) => {
@@ -165,7 +212,7 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
     pause: pauseAudio,
     nextTrack: () => nextTrack(true),
     prevTrack: () => prevTrack(true),
-    selectTrack: (idx) => selectTrack(idx, true),
+    selectTrack: (idx, notify = true, isManual = true) => selectTrack(idx, notify, isManual),
     setVolume,
     seek,
     isPlaying,

@@ -11,9 +11,11 @@ import {
   Phone,
   ExternalLink,
   Navigation,
-  FileText
+  FileText,
+  Music
 } from 'lucide-react';
 import { DANANG_PITCHES, getGoogleMapsSearchUrl } from '../data/daNangPitches';
+import { PLAYLIST } from './ChampionsLeagueAudioPlayer';
 import Portal from './Portal';
 
 export default function AdminPanel({ 
@@ -37,6 +39,7 @@ export default function AdminPanel({
   const [maxPlayers, setMaxPlayers] = useState(match?.maxPlayers || 14);
   const [notes, setNotes] = useState(match?.notes || '');
   const [status, setStatus] = useState(match?.status || 'OPEN');
+  const [defaultTrackId, setDefaultTrackId] = useState(match?.defaultTrackId || 'waka-waka');
   const [saving, setSaving] = useState(false);
 
   // Security state
@@ -58,6 +61,7 @@ export default function AdminPanel({
         setMaxPlayers(match.maxPlayers || 14);
         setNotes(match.notes || '');
         setStatus(match.status || 'OPEN');
+        setDefaultTrackId(match.defaultTrackId || 'waka-waka');
         isInitializedRef.current = true;
       }
     } else {
@@ -103,7 +107,8 @@ export default function AdminPanel({
         matchTime: matchTime.trim(),
         maxPlayers: Number(maxPlayers) || 14,
         notes: notes.trim(),
-        status
+        status,
+        defaultTrackId
       });
       showToast?.('✅ Đã lưu cài đặt kèo đá bóng thành công!');
       isInitializedRef.current = false;
@@ -452,6 +457,29 @@ export default function AdminPanel({
                 <option value="LOCKED">🔴 Khóa đăng ký (Đã đủ người/Tạm ngưng)</option>
                 <option value="BALANCED">🔵 Đã chia đội</option>
               </select>
+            </div>
+
+            {/* Bài hát phát trước (Âm Nhạc Sân Cỏ) */}
+            <div>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <Music size={13} color="#00F298" />
+                <span>Bài hát phát đầu tiên (Âm Nhạc Sân Cỏ):</span>
+              </label>
+              <select
+                className="clean-input"
+                value={defaultTrackId}
+                onChange={(e) => setDefaultTrackId(e.target.value)}
+                style={{ background: '#0F1A28', fontSize: '0.84rem' }}
+              >
+                {PLAYLIST.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.icon} {t.title} – {t.artist} ({t.tag})
+                  </option>
+                ))}
+              </select>
+              <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '3px' }}>
+                ⭐ Bài hát này sẽ tự động phát đầu tiên cho bất kỳ ai truy cập website hoặc khi làm mới trận.
+              </div>
             </div>
 
             <button 

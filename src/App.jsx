@@ -30,6 +30,7 @@ export default function App() {
       teamCount: 2,
       status: "OPEN",
       players: [],
+      defaultTrackId: "waka-waka",
       hasPasswordSet: true
     };
   });
@@ -40,10 +41,22 @@ export default function App() {
   const [musicPlaying, setMusicPlaying] = useState(true);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
     try {
-      const saved = localStorage.getItem('football_music_track_idx');
-      if (saved !== null) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 0 && parsed < PLAYLIST.length) return parsed;
+      const manualTrack = sessionStorage.getItem('football_user_manual_track');
+      if (manualTrack === 'true') {
+        const saved = localStorage.getItem('football_music_track_idx');
+        if (saved !== null) {
+          const parsed = parseInt(saved, 10);
+          if (!isNaN(parsed) && parsed >= 0 && parsed < PLAYLIST.length) return parsed;
+        }
+      } else {
+        const cached = localStorage.getItem('dsu_cached_match');
+        if (cached) {
+          const parsedMatch = JSON.parse(cached);
+          if (parsedMatch?.defaultTrackId) {
+            const defIdx = PLAYLIST.findIndex(t => t.id === parsedMatch.defaultTrackId);
+            if (defIdx !== -1) return defIdx;
+          }
+        }
       }
     } catch {}
     return 0;
@@ -378,12 +391,45 @@ export default function App() {
 
   // 12. Admin Clear All Players (New Match)
   const handleClearPlayers = async () => {
-    return adminFetch('/api/admin/clear-players', {});
+    try {
+      sessionStorage.removeItem('football_user_manual_track');
+    } catch {}
+    const res = await adminFetch('/api/admin/clear-players', {});
+    // Reset track to designated default track on match reset
+    const defId = match?.defaultTrackId || 'waka-waka';
+    const dIdx = PLAYLIST.findIndex(t => t.id === defId);
+    if (dIdx !== -1 && audioRef.current) {
+      audioRef.current.selectTrack(dIdx, false, false);
+    }
+    return res;
   };
 
   // 13. Admin Change Password
   const handleChangePassword = async (newPassword) => {
     return adminFetch('/api/admin/change-password', { newPassword });
+  };
+
+  // 14. Admin Set Default Track (Music Playlist)
+  const handleSetDefaultTrack = async (trackId) => {
+    try {
+      const res = await adminFetch('/api/admin/set-default-track', { trackId });
+      if (res && res.success) {
+        const trackIdx = PLAYLIST.findIndex(t => t.id === trackId);
+        if (trackIdx !== -1) {
+          try {
+            sessionStorage.removeItem('football_user_manual_track');
+            localStorage.setItem('football_music_track_idx', String(trackIdx));
+          } catch {}
+          if (audioRef.current) {
+            audioRef.current.selectTrack(trackIdx, false, false);
+          }
+        }
+        showToast(`⭐ Đã chỉ định "${PLAYLIST.find(t => t.id === trackId)?.title || 'Bài hát'}" phát trước cho tất cả thành viên!`);
+      }
+      return res;
+    } catch (err) {
+      showToast('❌ Không thể đặt bài hát phát trước: ' + (err?.message || 'Lỗi'));
+    }
   };
 
   if (loading || !match) {
@@ -735,6 +781,9 @@ export default function App() {
           onSeek={handleSeek}
           volume={audioRef.current?.volume ?? 0.85}
           onVolumeChange={handleVolumeChange}
+          isAdmin={isAdmin}
+          defaultTrackId={match?.defaultTrackId || 'waka-waka'}
+          onSetDefaultTrack={handleSetDefaultTrack}
         />
 
         {/* Background Football Music Player */}
@@ -743,6 +792,7 @@ export default function App() {
           showToast={showToast} 
           onStateChange={setMusicPlaying}
           onTrackChange={setCurrentTrackIndex}
+          defaultTrackId={match?.defaultTrackId || 'waka-waka'}
         />
 
         {/* Toast feedback notification */}

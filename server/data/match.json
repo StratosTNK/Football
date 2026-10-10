@@ -8,6 +8,7 @@
   "teamCount": 2,
   "status": "OPEN",
   "adminPassword": "admin123",
+  "defaultTrackId": "waka-waka",
   "players": [],
   "lastUpdated": "2026-10-02T10:17:25.082Z"
 }

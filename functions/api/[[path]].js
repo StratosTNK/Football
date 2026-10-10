@@ -28,6 +28,7 @@ const getDefaultMatchState = () => {
     notes: "Mang giày đinh dăm TF. Đến sớm 10 phút khởi động!",
     adminPassword: "admin123",
     players: [],
+    defaultTrackId: "waka-waka",
     lastUpdated: new Date().toISOString()
   };
 };
@@ -102,6 +103,7 @@ function getPublicState(state, env) {
   const kv = findKV(env);
   return {
     ...publicData,
+    defaultTrackId: state.defaultTrackId || 'waka-waka',
     hasPasswordSet: Boolean(adminPassword),
     hasDatabase: Boolean(kv)
   };
@@ -358,7 +360,7 @@ export async function onRequest(context) {
       }
 
       const body = await getBody();
-      const { title, stadium, location, matchDate, matchTime, maxPlayers, notes, status, teamCount } = body;
+      const { title, stadium, location, matchDate, matchTime, maxPlayers, notes, status, teamCount, defaultTrackId } = body;
 
       if (title !== undefined) state.title = title;
       if (stadium !== undefined) state.stadium = stadium;
@@ -369,8 +371,25 @@ export async function onRequest(context) {
       if (notes !== undefined) state.notes = notes;
       if (status !== undefined) state.status = status;
       if (teamCount !== undefined) state.teamCount = Number(teamCount);
+      if (defaultTrackId !== undefined) state.defaultTrackId = defaultTrackId;
 
       await putState(env, state);
+      return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
+    }
+
+    // 5b. POST /api/admin/set-default-track
+    if (method === 'POST' && pathname === '/api/admin/set-default-track') {
+      if (!verifyAdmin(request, state)) {
+        return new Response(JSON.stringify({ success: false, message: 'Chưa xác thực quyền Admin!' }), { status: 403, headers: corsHeaders });
+      }
+
+      const body = await getBody();
+      const { trackId } = body;
+      if (trackId && typeof trackId === 'string') {
+        state.defaultTrackId = trackId;
+        await putState(env, state);
+      }
+
       return new Response(JSON.stringify({ success: true, data: getPublicState(state, env) }), { headers: corsHeaders });
     }
 
