@@ -1488,24 +1488,6 @@ export default function TeamDivider({
               );
             })}
           </div>
-
-          {/* Footer Link / Watermark */}
-          {withHeader && (
-            <div style={{
-              marginTop: '14px',
-              paddingTop: '10px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.72rem',
-              color: 'rgba(255, 255, 255, 0.45)',
-              fontWeight: 600
-            }}>
-              <span>⚽ Chia Đội Phủi Online</span>
-              <span>👉 {typeof window !== 'undefined' ? window.location.origin : 'http://localhost/'}</span>
-            </div>
-          )}
         </div>
       </div>
     </div>
