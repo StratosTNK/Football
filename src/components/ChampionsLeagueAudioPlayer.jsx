@@ -52,7 +52,6 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
     try {
-      // Check if user manually picked a track in this session
       const manualTrack = sessionStorage.getItem('football_user_manual_track');
       if (manualTrack === 'true') {
         const saved = localStorage.getItem('football_music_track_idx');
@@ -82,9 +81,90 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
 
   const audioRef = useRef(null);
   const userMutedRef = useRef(false);
+  const isTransitioningRef = useRef(false);
   const lastDefaultTrackRef = useRef(defaultTrackId);
+  const currentTrackIndexRef = useRef(currentTrackIndex);
+  currentTrackIndexRef.current = currentTrackIndex;
 
   const currentTrack = PLAYLIST[currentTrackIndex] || PLAYLIST[0];
+
+  // Core function to safely change and play any track in the playlist
+  const changeTrack = (targetIndex, autoPlay = true, notify = true, isManual = false) => {
+    const validIdx = (targetIndex + PLAYLIST.length) % PLAYLIST.length;
+    currentTrackIndexRef.current = validIdx;
+    setCurrentTrackIndex(validIdx);
+    if (onTrackChange) onTrackChange(validIdx);
+
+    try {
+      localStorage.setItem('football_music_track_idx', String(validIdx));
+      if (isManual) {
+        sessionStorage.setItem('football_user_manual_track', 'true');
+      }
+    } catch {}
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    isTransitioningRef.current = true;
+    userMutedRef.current = !autoPlay;
+
+    const targetTrack = PLAYLIST[validIdx];
+    audio.pause();
+    audio.src = targetTrack.src;
+    audio.currentTime = 0;
+    audio.load();
+
+    if (autoPlay) {
+      const executePlay = () => {
+        const p = audio.play();
+        if (p && typeof p.then === 'function') {
+          p.then(() => {
+            isTransitioningRef.current = false;
+            setIsPlaying(true);
+            if (onStateChange) onStateChange(true);
+          }).catch((err) => {
+            console.warn('Playback deferred, waiting for canplay buffer:', err);
+            const onCanPlay = () => {
+              audio.removeEventListener('canplay', onCanPlay);
+              if (!userMutedRef.current) {
+                audio.play().then(() => {
+                  isTransitioningRef.current = false;
+                  setIsPlaying(true);
+                  if (onStateChange) onStateChange(true);
+                }).catch((e) => {
+                  console.error('Audio play failed after canplay:', e);
+                  isTransitioningRef.current = false;
+                  setIsPlaying(false);
+                  if (onStateChange) onStateChange(false);
+                });
+              } else {
+                isTransitioningRef.current = false;
+              }
+            };
+            audio.addEventListener('canplay', onCanPlay, { once: true });
+          });
+        }
+      };
+
+      if (audio.readyState >= 2) {
+        executePlay();
+      } else {
+        const onReady = () => {
+          audio.removeEventListener('canplay', onReady);
+          executePlay();
+        };
+        audio.addEventListener('canplay', onReady, { once: true });
+      }
+    } else {
+      isTransitioningRef.current = false;
+      setIsPlaying(false);
+      if (onStateChange) onStateChange(false);
+    }
+
+    if (notify && showToast) {
+      showToast(`🎵 Đang phát: ${targetTrack.title}`);
+    }
+  };
 
   // Sync when defaultTrackId changes (e.g. from Admin or when match data loads from server)
   useEffect(() => {
@@ -100,45 +180,35 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
     const defaultChanged = lastDefaultTrackRef.current !== defaultTrackId;
     lastDefaultTrackRef.current = defaultTrackId;
 
-    // If default track changed or user hasn't explicitly selected another song this session:
     if (defaultChanged || !hasManual) {
-      if (currentTrackIndex !== targetIdx) {
-        setCurrentTrackIndex(targetIdx);
-        if (onTrackChange) onTrackChange(targetIdx);
-        try {
-          localStorage.setItem('football_music_track_idx', String(targetIdx));
-        } catch {}
-
-        const audio = audioRef.current;
-        if (audio) {
-          const wasPlaying = isPlaying;
-          audio.src = PLAYLIST[targetIdx].src;
-          audio.currentTime = 0;
-          if (wasPlaying && !userMutedRef.current) {
-            audio.play().catch(() => {});
-          }
-        }
+      if (currentTrackIndexRef.current !== targetIdx) {
+        changeTrack(targetIdx, isPlaying, false, false);
       }
     }
   }, [defaultTrackId]);
 
   const startPlaying = () => {
-    if (audioRef.current && !userMutedRef.current) {
-      audioRef.current.play().then(() => {
+    const audio = audioRef.current;
+    if (audio && !userMutedRef.current) {
+      if (!audio.src) {
+        audio.src = PLAYLIST[currentTrackIndexRef.current].src;
+        audio.load();
+      }
+      audio.play().then(() => {
         setIsPlaying(true);
         if (onStateChange) onStateChange(true);
       }).catch((err) => {
-        // Autoplay blocked by browser policy without user gesture yet
-        console.log('Autoplay waiting for user gesture:', err);
+        console.log('Autoplay deferred for user gesture:', err);
       });
     }
   };
 
   const pauseAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
+    const audio = audioRef.current;
+    if (audio) {
       userMutedRef.current = true;
+      audio.pause();
+      setIsPlaying(false);
       if (onStateChange) onStateChange(false);
     }
   };
@@ -149,45 +219,19 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
       if (showToast) showToast('🔇 Đã tắt nhạc.');
     } else {
       userMutedRef.current = false;
-      startPlaying();
-      if (showToast) showToast(`🎵 Đang phát: ${currentTrack.title}`);
-    }
-  };
-
-  const selectTrack = (index, notify = true, isManual = true) => {
-    const validIdx = (index + PLAYLIST.length) % PLAYLIST.length;
-    setCurrentTrackIndex(validIdx);
-    if (onTrackChange) onTrackChange(validIdx);
-
-    try {
-      localStorage.setItem('football_music_track_idx', String(validIdx));
-      if (isManual) {
-        sessionStorage.setItem('football_user_manual_track', 'true');
+      const audio = audioRef.current;
+      if (audio) {
+        if (!audio.src) {
+          audio.src = PLAYLIST[currentTrackIndexRef.current].src;
+          audio.load();
+        }
+        audio.play().then(() => {
+          setIsPlaying(true);
+          if (onStateChange) onStateChange(true);
+        }).catch(() => {});
       }
-    } catch {}
-
-    const audio = audioRef.current;
-    if (audio) {
-      audio.src = PLAYLIST[validIdx].src;
-      audio.currentTime = 0;
-      userMutedRef.current = false;
-      audio.play().then(() => {
-        setIsPlaying(true);
-        if (onStateChange) onStateChange(true);
-      }).catch(() => {});
+      if (showToast) showToast(`🎵 Đang phát: ${PLAYLIST[currentTrackIndexRef.current].title}`);
     }
-
-    if (notify && showToast) {
-      showToast(`🎵 Đang phát: ${PLAYLIST[validIdx].title}`);
-    }
-  };
-
-  const nextTrack = (notify = true) => {
-    selectTrack(currentTrackIndex + 1, notify, true);
-  };
-
-  const prevTrack = (notify = true) => {
-    selectTrack(currentTrackIndex - 1, notify, true);
   };
 
   const setVolume = (val) => {
@@ -202,12 +246,13 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
   };
 
   const seek = (timeSec) => {
-    if (audioRef.current) {
-      const dur = audioRef.current.duration;
+    const audio = audioRef.current;
+    if (audio) {
+      const dur = audio.duration;
       const maxVal = dur && !isNaN(dur) ? dur : 9999;
       const validTime = Math.max(0, Math.min(maxVal, Number(timeSec) || 0));
       try {
-        audioRef.current.currentTime = validTime;
+        audio.currentTime = validTime;
       } catch (err) {
         console.error('Seek error:', err);
       }
@@ -219,16 +264,22 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
     toggle,
     play: () => {
       userMutedRef.current = false;
-      if (audioRef.current) {
-        audioRef.current.play().catch(() => {});
-        setIsPlaying(true);
-        if (onStateChange) onStateChange(true);
+      const audio = audioRef.current;
+      if (audio) {
+        if (!audio.src) {
+          audio.src = PLAYLIST[currentTrackIndexRef.current].src;
+          audio.load();
+        }
+        audio.play().then(() => {
+          setIsPlaying(true);
+          if (onStateChange) onStateChange(true);
+        }).catch(() => {});
       }
     },
     pause: pauseAudio,
-    nextTrack: () => nextTrack(true),
-    prevTrack: () => prevTrack(true),
-    selectTrack: (idx, notify = true, isManual = true) => selectTrack(idx, notify, isManual),
+    nextTrack: () => changeTrack(currentTrackIndexRef.current + 1, true, true, true),
+    prevTrack: () => changeTrack(currentTrackIndexRef.current - 1, true, true, true),
+    selectTrack: (idx, notify = true, isManual = true) => changeTrack(idx, true, notify, isManual),
     setVolume,
     seek,
     isPlaying,
@@ -246,13 +297,61 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
     if (!audio) return;
 
     audio.volume = volume;
+    if (!audio.src) {
+      audio.src = PLAYLIST[currentTrackIndexRef.current].src;
+      audio.load();
+    }
 
-    // 1. Attempt to play immediately on load
+    const handlePlay = () => {
+      isTransitioningRef.current = false;
+      setIsPlaying(true);
+      if (onStateChange) onStateChange(true);
+    };
+
+    const handlePause = () => {
+      if (!isTransitioningRef.current) {
+        setIsPlaying(false);
+        if (onStateChange) onStateChange(false);
+      }
+    };
+
+    // Auto-advance to next track when current track reaches the end
+    const handleEnded = () => {
+      console.log('Audio track naturally ended, auto-advancing to next track...');
+      isTransitioningRef.current = true;
+      const nextIdx = (currentTrackIndexRef.current + 1) % PLAYLIST.length;
+      changeTrack(nextIdx, true, true, false);
+    };
+
+    const handleTimeUpdate = () => {
+      if (!isTransitioningRef.current && audioRef.current) {
+        setCurrentTime(audioRef.current.currentTime || 0);
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (audioRef.current) {
+        setDuration(audioRef.current.duration || 0);
+      }
+    };
+
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('playing', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    // 1. Attempt to play on load
     startPlaying();
 
-    // 2. Mobile & desktop autoplay policy: unlock on very first touch/click
+    // 2. Mobile & desktop autoplay policy: unlock on first gesture
     const handleFirstGesture = () => {
-      if (!userMutedRef.current) {
+      if (!userMutedRef.current && audio) {
+        if (!audio.src) {
+          audio.src = PLAYLIST[currentTrackIndexRef.current].src;
+          audio.load();
+        }
         audio.play().then(() => {
           setIsPlaying(true);
           if (onStateChange) onStateChange(true);
@@ -277,6 +376,13 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
     };
 
     return () => {
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('playing', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+
       window.removeEventListener('click', handleFirstGesture);
       window.removeEventListener('touchstart', handleFirstGesture);
       window.removeEventListener('scroll', handleFirstGesture);
@@ -287,11 +393,7 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTra
   return (
     <audio
       ref={audioRef}
-      src={currentTrack.src}
       preload="auto"
-      onEnded={() => nextTrack(true)}
-      onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
-      onLoadedMetadata={(e) => setDuration(e.target.duration)}
       style={{ display: 'none' }}
     />
   );
