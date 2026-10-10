@@ -83,16 +83,15 @@ export default function Header({
 
             {/* Utility Toolbar Tier on Mobile */}
             <div className="header-utility-actions">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: '1.1 1 0', minWidth: 0 }}>
+              <div className="header-music-group">
                 <button
                   type="button"
                   onClick={onToggleMusic}
-                  className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
-                  style={{ flex: 1, minWidth: 0, padding: '7px 4px !important', justifyContent: 'center' }}
+                  className={`btn btn-header btn-header-music ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
                   title={musicPlaying ? `Đang phát: ${currentTrack?.title || 'Nhạc'} (Bấm để tắt)` : 'Bấm để bật nhạc'}
                 >
                   <Music size={12} className={musicPlaying ? "spin-music" : ""} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span>
                     {musicPlaying ? '♫ Bật' : '♫ Tắt'}
                   </span>
                 </button>
@@ -103,14 +102,7 @@ export default function Header({
                     if (onOpenMusicModal) onOpenMusicModal();
                     else if (onNextTrack) onNextTrack();
                   }}
-                  className="btn btn-header"
-                  style={{
-                    padding: '7px 5px !important',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderColor: 'rgba(255, 255, 255, 0.15)',
-                    color: '#00F298',
-                    flexShrink: 0
-                  }}
+                  className="btn btn-header btn-header-music-list"
                   title="Danh sách bài hát & Đổi nhạc"
                 >
                   <ListMusic size={12} />
@@ -121,7 +113,6 @@ export default function Header({
                 type="button"
                 onClick={onOpenPitchFinder}
                 className="btn btn-header btn-header-pitch"
-                style={{ borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38BDF8' }}
                 title="Tìm sân bóng Đà Nẵng & số điện thoại đặt sân"
               >
                 <MapPin size={12} />
@@ -150,16 +141,15 @@ export default function Header({
           </>
         ) : (
           <div className="header-guest-actions">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: '1 1 0', minWidth: 0 }}>
+            <div className="header-music-group">
               <button
                 type="button"
                 onClick={onToggleMusic}
-                className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
-                style={{ flex: 1, minWidth: 0, padding: '7px 4px !important', justifyContent: 'center' }}
+                className={`btn btn-header btn-header-music ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
                 title={musicPlaying ? `Đang phát: ${currentTrack?.title || 'Nhạc'} (Bấm để tắt)` : 'Bấm để bật nhạc'}
               >
                 <Music size={12} className={musicPlaying ? "spin-music" : ""} />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span>
                   {musicPlaying ? '♫ Bật' : '♫ Tắt'}
                 </span>
               </button>
@@ -170,14 +160,7 @@ export default function Header({
                   if (onOpenMusicModal) onOpenMusicModal();
                   else if (onNextTrack) onNextTrack();
                 }}
-                className="btn btn-header"
-                style={{
-                  padding: '7px 5px !important',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  borderColor: 'rgba(255, 255, 255, 0.15)',
-                  color: '#00F298',
-                  flexShrink: 0
-                }}
+                className="btn btn-header btn-header-music-list"
                 title="Danh sách bài hát & Đổi nhạc"
               >
                 <ListMusic size={12} />
@@ -188,7 +171,6 @@ export default function Header({
               type="button"
               onClick={onOpenPitchFinder}
               className="btn btn-header btn-header-pitch"
-              style={{ borderColor: 'rgba(56, 189, 248, 0.4)', color: '#38BDF8' }}
               title="Tìm sân bóng Đà Nẵng & số điện thoại đặt sân"
             >
               <MapPin size={12} />
