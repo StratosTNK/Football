@@ -234,17 +234,11 @@ export default function TeamDivider({
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
+                  justifyContent: 'flex-end',
                   fontSize: '0.67rem',
                   color: 'rgba(255, 255, 255, 0.72)',
                   paddingTop: '2px'
                 }}>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ color: POSITIONS.GK.color }}>🧤 {stats.positions.GK}</span>
-                    <span style={{ color: POSITIONS.DF.color }}>🛡️ {stats.positions.DF}</span>
-                    <span style={{ color: POSITIONS.MF.color }}>⚽ {stats.positions.MF}</span>
-                    <span style={{ color: POSITIONS.FW.color }}>🎯 {stats.positions.FW}</span>
-                  </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <span style={{ color: RATINGS.S.color, fontWeight: 700 }}>⭐{stats.ratings.S || 0}</span>
                     <span style={{ color: RATINGS.A.color, fontWeight: 700 }}>⚡{stats.ratings.A || 0}</span>
@@ -350,30 +344,6 @@ export default function TeamDivider({
                       }}>
                         {player.name}
                       </span>
-
-                      {/* Position Badge ONLY (Tier is shown in popup when tapped) */}
-                      {(() => {
-                        const pos = POSITIONS[player.position] || POSITIONS.MF;
-                        return (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-                            <span style={{
-                              fontSize: '0.64rem',
-                              fontWeight: 800,
-                              color: pos.color,
-                              background: pos.badgeBg,
-                              border: `1px solid ${pos.border}`,
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '3px'
-                            }} title={`Vị trí: ${pos.name} (Chạm để xem trình độ)`}>
-                              <span>{pos.icon}</span>
-                              <span>{pos.id}</span>
-                            </span>
-                          </div>
-                        );
-                      })()}
                     </div>
 
                     {/* Admin Transfer Button (Quick Toggle) */}
@@ -984,57 +954,6 @@ export default function TeamDivider({
                   </button>
                 </div>
 
-                {/* Main Assigned Position Highlight */}
-                {selectedPlayer.position && (
-                  <div style={{
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '10px',
-                    padding: '8px 12px',
-                    marginBottom: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.78rem'
-                  }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Vị trí xếp trong đội:</span>
-                    {(() => {
-                      const pos = POSITIONS[selectedPlayer.position] || POSITIONS.MF;
-                      const rawTier = (selectedPlayer.skills && selectedPlayer.skills[selectedPlayer.position])
-                        ? selectedPlayer.skills[selectedPlayer.position]
-                        : (selectedPlayer.rating || 'B');
-                      const tierKey = rawTier === 'Ổn' ? 'B' : (rawTier || 'B');
-                      const rat = RATINGS[tierKey] || RATINGS.B;
-                      return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{
-                            color: pos.color,
-                            fontWeight: 800,
-                            background: pos.badgeBg,
-                            border: `1px solid ${pos.border}`,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '0.72rem'
-                          }}>
-                            {pos.icon} {pos.name} ({pos.id})
-                          </span>
-                          <span style={{
-                            color: rat.color,
-                            fontWeight: 800,
-                            background: rat.bg,
-                            border: `1px solid ${rat.border}`,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '0.72rem'
-                          }}>
-                            {rat.star} Tier {rat.id}
-                          </span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-
                 {/* 4 Positions Breakdown */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600, paddingLeft: '2px' }}>
@@ -1047,7 +966,6 @@ export default function TeamDivider({
                       : (selectedPlayer.position === posKey ? selectedPlayer.rating : 'B');
                     const tierKey = rawTier === 'Ổn' ? 'B' : (rawTier || 'B');
                     const tier = RATINGS[tierKey] || RATINGS.B;
-                    const isAssigned = selectedPlayer.position === posKey;
                     const isHighlight = tierKey === 'S' || tierKey === 'A';
 
                     return (
@@ -1059,12 +977,8 @@ export default function TeamDivider({
                           justifyContent: 'space-between',
                           padding: '10px 12px',
                           borderRadius: '12px',
-                          background: isAssigned 
-                            ? `${pos.color}15` 
-                            : (isHighlight ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)'),
-                          border: isAssigned 
-                            ? `1px solid ${pos.color}50` 
-                            : (isHighlight ? `1px solid ${pos.border}` : '1px solid rgba(255, 255, 255, 0.07)')
+                          background: isHighlight ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)',
+                          border: isHighlight ? `1px solid ${pos.border}` : '1px solid rgba(255, 255, 255, 0.07)'
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1076,19 +990,6 @@ export default function TeamDivider({
                             <span style={{ fontSize: '0.8rem', color: '#CBD5E1', fontWeight: 600 }}>
                               {pos.name}
                             </span>
-                            {isAssigned && (
-                              <span style={{
-                                fontSize: '0.62rem',
-                                color: 'var(--emerald)',
-                                background: 'rgba(0, 242, 152, 0.15)',
-                                border: '1px solid rgba(0, 242, 152, 0.3)',
-                                padding: '1px 5px',
-                                borderRadius: '4px',
-                                fontWeight: 700
-                              }}>
-                                Đang đá
-                              </span>
-                            )}
                           </div>
                         </div>
 
@@ -1536,17 +1437,11 @@ export default function TeamDivider({
                             <div style={{
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'space-between',
+                              justifyContent: 'flex-end',
                               fontSize: '0.67rem',
                               color: 'rgba(255, 255, 255, 0.75)',
                               paddingTop: '2px'
                             }}>
-                              <div style={{ display: 'flex', gap: '6px' }}>
-                                <span style={{ color: POSITIONS.GK.color }}>🧤 {expStats.positions.GK}</span>
-                                <span style={{ color: POSITIONS.DF.color }}>🛡️ {expStats.positions.DF}</span>
-                                <span style={{ color: POSITIONS.MF.color }}>⚽ {expStats.positions.MF}</span>
-                                <span style={{ color: POSITIONS.FW.color }}>🎯 {expStats.positions.FW}</span>
-                              </div>
                               <div style={{ display: 'flex', gap: '6px' }}>
                                 <span style={{ color: RATINGS.S.color, fontWeight: 700 }}>⭐{expStats.ratings.S}</span>
                                 <span style={{ color: RATINGS.A.color, fontWeight: 700 }}>⚡{expStats.ratings.A}</span>
@@ -1599,28 +1494,11 @@ export default function TeamDivider({
                             {player.name}
                           </span>
 
-                          {/* Export Card Position & Rating Badges */}
+                          {/* Export Card Rating Badge */}
                           {(() => {
-                            const pos = POSITIONS[player.position] || POSITIONS.MF;
                             const rat = RATINGS[player.rating] || RATINGS.A;
                             return (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                                <span style={{
-                                  fontSize: '0.68rem',
-                                  fontWeight: 800,
-                                  color: pos.color,
-                                  background: pos.badgeBg,
-                                  border: `1px solid ${pos.border}`,
-                                  padding: '1px 6px',
-                                  borderRadius: '4px',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '2px'
-                                }}>
-                                  <span>{pos.icon}</span>
-                                  <span>{pos.id}</span>
-                                </span>
-
                                 <span style={{
                                   fontSize: '0.68rem',
                                   fontWeight: 800,
