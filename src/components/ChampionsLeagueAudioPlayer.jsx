@@ -7,8 +7,17 @@ export const PLAYLIST = [
     artist: 'Shakira',
     src: '/waka-waka.mp3',
     icon: '🌍',
-    tag: 'FIFA World Cup 2010',
+    tag: 'World Cup 2010',
     duration: '03:21'
+  },
+  {
+    id: 'la-la-la',
+    title: 'La La La (Brazil 2014)',
+    artist: 'Shakira',
+    src: '/la-la-la.mp3',
+    icon: '🇧🇷',
+    tag: 'World Cup 2014',
+    duration: '03:15'
   },
   {
     id: 'champions-league',
