@@ -1,9 +1,55 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
-const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange }, ref) => {
+export const PLAYLIST = [
+  {
+    id: 'waka-waka',
+    title: 'Waka Waka (This Time For Africa)',
+    artist: 'Shakira',
+    src: '/waka-waka.mp3',
+    icon: '🌍',
+    tag: 'FIFA World Cup 2010',
+    duration: '03:21'
+  },
+  {
+    id: 'champions-league',
+    title: 'UEFA Champions League Anthem',
+    artist: 'Tony Britten',
+    src: '/anthem.mp3',
+    icon: '🏆',
+    tag: 'Cúp C1 Châu Âu',
+    duration: '00:42'
+  }
+];
+
+const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange, onTrackChange }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem('football_music_track_idx');
+      if (saved !== null) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed < PLAYLIST.length) return parsed;
+      }
+    } catch {}
+    return 0; // Default to Waka Waka
+  });
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolumeState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('football_music_volume');
+      if (saved !== null) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+      }
+    } catch {}
+    return 0.85;
+  });
+
   const audioRef = useRef(null);
   const userMutedRef = useRef(false);
+
+  const currentTrack = PLAYLIST[currentTrackIndex] || PLAYLIST[0];
 
   const startPlaying = () => {
     if (audioRef.current && !userMutedRef.current) {
@@ -33,7 +79,58 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange }, ref
     } else {
       userMutedRef.current = false;
       startPlaying();
-      if (showToast) showToast('🎵 Đang phát nhạc UEFA Champions League!');
+      if (showToast) showToast(`🎵 Đang phát: ${currentTrack.title}`);
+    }
+  };
+
+  const selectTrack = (index, notify = true) => {
+    const validIdx = (index + PLAYLIST.length) % PLAYLIST.length;
+    setCurrentTrackIndex(validIdx);
+    if (onTrackChange) onTrackChange(validIdx);
+
+    try {
+      localStorage.setItem('football_music_track_idx', String(validIdx));
+    } catch {}
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.src = PLAYLIST[validIdx].src;
+      audio.currentTime = 0;
+      userMutedRef.current = false;
+      audio.play().then(() => {
+        setIsPlaying(true);
+        if (onStateChange) onStateChange(true);
+      }).catch(() => {});
+    }
+
+    if (notify && showToast) {
+      showToast(`🎵 Đang phát: ${PLAYLIST[validIdx].title}`);
+    }
+  };
+
+  const nextTrack = (notify = true) => {
+    selectTrack(currentTrackIndex + 1, notify);
+  };
+
+  const prevTrack = (notify = true) => {
+    selectTrack(currentTrackIndex - 1, notify);
+  };
+
+  const setVolume = (val) => {
+    const clamped = Math.max(0, Math.min(1, val));
+    setVolumeState(clamped);
+    if (audioRef.current) {
+      audioRef.current.volume = clamped;
+    }
+    try {
+      localStorage.setItem('football_music_volume', String(clamped));
+    } catch {}
+  };
+
+  const seek = (timeSec) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = timeSec;
+      setCurrentTime(timeSec);
     }
   };
 
@@ -42,21 +139,30 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange }, ref
     play: () => {
       userMutedRef.current = false;
       if (audioRef.current) {
-        audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
         setIsPlaying(true);
         if (onStateChange) onStateChange(true);
       }
     },
     pause: pauseAudio,
-    isPlaying
+    nextTrack: () => nextTrack(true),
+    prevTrack: () => prevTrack(true),
+    selectTrack: (idx) => selectTrack(idx, true),
+    setVolume,
+    seek,
+    isPlaying,
+    currentTrackIndex,
+    currentTrack: PLAYLIST[currentTrackIndex],
+    currentTime,
+    duration,
+    volume
   }));
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    audio.volume = 0.85;
+    audio.volume = volume;
 
     // 1. Attempt to play immediately on load
     startPlaying();
@@ -98,9 +204,11 @@ const ChampionsLeagueAudioPlayer = forwardRef(({ showToast, onStateChange }, ref
   return (
     <audio
       ref={audioRef}
-      src="/anthem.mp3"
-      loop
+      src={currentTrack.src}
       preload="auto"
+      onEnded={() => nextTrack(true)}
+      onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
+      onLoadedMetadata={(e) => setDuration(e.target.duration)}
       style={{ display: 'none' }}
     />
   );

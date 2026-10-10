@@ -8,7 +8,8 @@ import PlayerList from './components/PlayerList';
 import TeamDivider from './components/TeamDivider';
 import AdminLoginModal from './components/AdminLoginModal';
 import AdminPanel from './components/AdminPanel';
-import ChampionsLeagueAudioPlayer from './components/ChampionsLeagueAudioPlayer';
+import ChampionsLeagueAudioPlayer, { PLAYLIST } from './components/ChampionsLeagueAudioPlayer';
+import MusicPlayerModal from './components/MusicPlayerModal';
 import PitchFinderModal from './components/PitchFinderModal';
 import Portal from './components/Portal';
 import { Shirt, ListChecks, Shuffle, RefreshCw, Undo2 } from 'lucide-react';
@@ -35,13 +36,54 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   
-  // Music state: ON by default!
+  // Music state: ON by default, multi-track playlist support!
   const [musicPlaying, setMusicPlaying] = useState(true);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem('football_music_track_idx');
+      if (saved !== null) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed < PLAYLIST.length) return parsed;
+      }
+    } catch {}
+    return 0;
+  });
+  const [showMusicModal, setShowMusicModal] = useState(false);
   const audioRef = useRef(null);
 
   const handleToggleMusic = () => {
     if (audioRef.current) {
       audioRef.current.toggle();
+    }
+  };
+
+  const handleNextTrack = () => {
+    if (audioRef.current) {
+      audioRef.current.nextTrack();
+    }
+  };
+
+  const handlePrevTrack = () => {
+    if (audioRef.current) {
+      audioRef.current.prevTrack();
+    }
+  };
+
+  const handleSelectTrack = (idx) => {
+    if (audioRef.current) {
+      audioRef.current.selectTrack(idx);
+    }
+  };
+
+  const handleSeek = (time) => {
+    if (audioRef.current) {
+      audioRef.current.seek(time);
+    }
+  };
+
+  const handleVolumeChange = (vol) => {
+    if (audioRef.current) {
+      audioRef.current.setVolume(vol);
     }
   };
 
@@ -373,6 +415,9 @@ export default function App() {
         isAdmin={isAdmin}
         musicPlaying={musicPlaying}
         onToggleMusic={handleToggleMusic}
+        onOpenMusicModal={() => setShowMusicModal(true)}
+        onNextTrack={handleNextTrack}
+        currentTrack={PLAYLIST[currentTrackIndex]}
         onOpenLogin={() => setShowLoginModal(true)}
         onLogout={handleAdminLogout}
         onOpenAdminPanel={() => setShowAdminPanel(true)}
@@ -675,11 +720,29 @@ export default function App() {
           />
         )}
 
-        {/* Background UEFA Champions League Music Player */}
+        {/* Music Playlist & Controller Modal */}
+        <MusicPlayerModal
+          isOpen={showMusicModal}
+          onClose={() => setShowMusicModal(false)}
+          currentTrackIndex={currentTrackIndex}
+          isPlaying={musicPlaying}
+          onTogglePlay={handleToggleMusic}
+          onNextTrack={handleNextTrack}
+          onPrevTrack={handlePrevTrack}
+          onSelectTrack={handleSelectTrack}
+          currentTime={audioRef.current?.currentTime || 0}
+          duration={audioRef.current?.duration || 0}
+          onSeek={handleSeek}
+          volume={audioRef.current?.volume ?? 0.85}
+          onVolumeChange={handleVolumeChange}
+        />
+
+        {/* Background Football Music Player */}
         <ChampionsLeagueAudioPlayer 
           ref={audioRef}
           showToast={showToast} 
           onStateChange={setMusicPlaying}
+          onTrackChange={setCurrentTrackIndex}
         />
 
         {/* Toast feedback notification */}

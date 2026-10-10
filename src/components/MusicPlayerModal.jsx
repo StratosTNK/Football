@@ -1,0 +1,469 @@
+import React from 'react';
+import { 
+  Play, 
+  Pause, 
+  SkipForward, 
+  SkipBack, 
+  Volume2, 
+  VolumeX, 
+  X, 
+  Music, 
+  Disc3, 
+  CheckCircle2 
+} from 'lucide-react';
+import Portal from './Portal';
+import { PLAYLIST } from './ChampionsLeagueAudioPlayer';
+
+export default function MusicPlayerModal({
+  isOpen,
+  onClose,
+  currentTrackIndex = 0,
+  isPlaying = false,
+  onTogglePlay,
+  onNextTrack,
+  onPrevTrack,
+  onSelectTrack,
+  currentTime = 0,
+  duration = 0,
+  onSeek,
+  volume = 0.85,
+  onVolumeChange
+}) {
+  if (!isOpen) return null;
+
+  const currentTrack = PLAYLIST[currentTrackIndex] || PLAYLIST[0];
+
+  const formatTime = (secs) => {
+    if (!secs || isNaN(secs)) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div 
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '420px',
+            width: '100%',
+            maxHeight: 'calc(100dvh - 30px)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: '18px 16px',
+            background: 'linear-gradient(175deg, #0E1624 0%, #070B13 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderTop: '1px solid rgba(0, 242, 152, 0.35)',
+            borderRadius: '22px',
+            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 242, 152, 0.08)',
+            margin: 'auto',
+            animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '16px',
+            paddingBottom: '12px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(0, 242, 152, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%)',
+                border: '1px solid rgba(0, 242, 152, 0.35)',
+                color: '#00F298',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem',
+                boxShadow: '0 4px 14px rgba(0, 242, 152, 0.18)'
+              }}>
+                <Music size={18} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                  Âm Nhạc Sân Cỏ
+                </h3>
+                <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '2px' }}>
+                  Playlist nhạc bóng đá cổ động sôi động
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.09)',
+                color: '#94A3B8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          {/* Now Playing Visual Card */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '16px',
+            marginBottom: '16px',
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Spinning Disc Effect */}
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #1F2937 25%, #0B0F19 65%, #000000 100%)',
+              border: '3px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: isPlaying ? '0 0 25px rgba(0, 242, 152, 0.35)' : '0 4px 15px rgba(0, 0, 0, 0.5)',
+              margin: '0 auto 12px auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              animation: isPlaying ? 'spinDisc 6s linear infinite' : 'none'
+            }}>
+              <span style={{ fontSize: '1.8rem', zIndex: 2 }}>{currentTrack.icon}</span>
+              <div style={{
+                position: 'absolute',
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                background: '#070B13',
+                border: '2px solid rgba(255, 255, 255, 0.3)'
+              }} />
+            </div>
+
+            {/* Track Info */}
+            <h4 style={{
+              fontSize: '0.96rem',
+              fontWeight: 800,
+              color: '#FFFFFF',
+              margin: '0 0 4px 0',
+              lineHeight: 1.3
+            }}>
+              {currentTrack.title}
+            </h4>
+
+            <div style={{
+              fontSize: '0.76rem',
+              color: '#00F298',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}>
+              <span>{currentTrack.artist}</span>
+              <span style={{ opacity: 0.5 }}>•</span>
+              <span style={{
+                background: 'rgba(0, 242, 152, 0.12)',
+                border: '1px solid rgba(0, 242, 152, 0.25)',
+                padding: '1px 6px',
+                borderRadius: '4px',
+                fontSize: '0.68rem',
+                color: '#00F298'
+              }}>
+                {currentTrack.tag}
+              </span>
+            </div>
+
+            {/* Scrubber Progress Bar */}
+            <div style={{ marginTop: '14px', marginBottom: '6px' }}>
+              <input 
+                type="range"
+                min="0"
+                max={duration || 100}
+                value={currentTime || 0}
+                onChange={(e) => onSeek && onSeek(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  accentColor: 'var(--emerald)',
+                  cursor: 'pointer',
+                  height: '4px'
+                }}
+              />
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '0.7rem',
+                color: 'var(--text-muted)',
+                marginTop: '4px'
+              }}>
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+
+            {/* Playback Controls */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              marginTop: '10px'
+            }}>
+              <button
+                type="button"
+                onClick={onPrevTrack}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Bài trước"
+              >
+                <SkipBack size={16} />
+              </button>
+
+              <button
+                type="button"
+                onClick={onTogglePlay}
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #00F298 0%, #00B96B 100%)',
+                  border: 'none',
+                  color: '#070C15',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 20px rgba(0, 242, 152, 0.4)',
+                  transition: 'transform 0.15s ease'
+                }}
+                title={isPlaying ? 'Tạm dừng' : 'Phát nhạc'}
+              >
+                {isPlaying ? <Pause size={22} fill="#070C15" /> : <Play size={22} fill="#070C15" style={{ marginLeft: '2px' }} />}
+              </button>
+
+              <button
+                type="button"
+                onClick={onNextTrack}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Bài tiếp theo"
+              >
+                <SkipForward size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Playlist Selection List */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+              marginBottom: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <span>DANH SÁCH BÀI HÁT ({PLAYLIST.length})</span>
+              <span style={{ fontSize: '0.7rem', color: '#00F298' }}>Tự động chuyển bài khi hết</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {PLAYLIST.map((track, idx) => {
+                const isSelected = idx === currentTrackIndex;
+
+                return (
+                  <div
+                    key={track.id}
+                    onClick={() => onSelectTrack(idx)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      background: isSelected 
+                        ? 'rgba(0, 242, 152, 0.12)' 
+                        : 'rgba(255, 255, 255, 0.03)',
+                      border: isSelected 
+                        ? '1px solid rgba(0, 242, 152, 0.4)' 
+                        : '1px solid rgba(255, 255, 255, 0.08)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        background: isSelected ? 'rgba(0, 242, 152, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        border: isSelected ? '1px solid rgba(0, 242, 152, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1rem',
+                        flexShrink: 0
+                      }}>
+                        {track.icon}
+                      </div>
+
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{
+                          fontWeight: 700,
+                          fontSize: '0.84rem',
+                          color: isSelected ? '#00F298' : '#FFFFFF',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {track.title}
+                        </div>
+                        <div style={{
+                          fontSize: '0.7rem',
+                          color: '#94A3B8',
+                          marginTop: '2px'
+                        }}>
+                          {track.artist} • <span style={{ color: 'var(--emerald)', opacity: 0.85 }}>{track.tag}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ flexShrink: 0, marginLeft: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {isSelected ? (
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          color: 'var(--emerald)',
+                          background: 'rgba(0, 242, 152, 0.15)',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(0, 242, 152, 0.3)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}>
+                          {isPlaying ? '▶ Đang phát' : '⏸ Đang chọn'}
+                        </span>
+                      ) : (
+                        <span style={{
+                          fontSize: '0.72rem',
+                          color: 'var(--text-dim)',
+                          fontWeight: 600
+                        }}>
+                          {track.duration}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Volume Control */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            padding: '8px 12px',
+            borderRadius: '10px',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            marginBottom: '16px'
+          }}>
+            <button
+              type="button"
+              onClick={() => onVolumeChange && onVolumeChange(volume > 0 ? 0 : 0.85)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: volume > 0 ? '#00F298' : 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title={volume > 0 ? 'Tắt âm lượng' : 'Bật âm lượng'}
+            >
+              {volume > 0 ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            </button>
+
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={volume}
+              onChange={(e) => onVolumeChange && onVolumeChange(Number(e.target.value))}
+              style={{
+                flex: 1,
+                accentColor: 'var(--emerald)',
+                cursor: 'pointer',
+                height: '4px'
+              }}
+            />
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', minWidth: '30px', textAlign: 'right' }}>
+              {Math.round(volume * 100)}%
+            </span>
+          </div>
+
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary"
+            style={{
+              width: '100%',
+              padding: '11px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              fontSize: '0.86rem'
+            }}
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </Portal>
+  );
+}

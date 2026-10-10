@@ -709,4 +709,21 @@ body {
   }
 }
 
+/* ========================================================
+   MUSIC PLAYER ANIMATIONS
+======================================================== */
+@keyframes spinDisc {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-music {
+  animation: spinDisc 3s linear infinite;
+}
+
+
 

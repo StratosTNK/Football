@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, LogOut, Check, Music, Copy, Shuffle, MapPin } from 'lucide-react';
+import { Shield, LogOut, Check, Music, Copy, Shuffle, MapPin, ListMusic } from 'lucide-react';
 import { formatMatchForZalo } from '../utils/zaloFormatter';
 
 export default function Header({ 
@@ -8,6 +8,9 @@ export default function Header({
   isAdmin, 
   musicPlaying,
   onToggleMusic,
+  onOpenMusicModal,
+  onNextTrack,
+  currentTrack,
   onOpenLogin, 
   onLogout, 
   onOpenAdminPanel,
@@ -80,15 +83,39 @@ export default function Header({
 
             {/* Utility Toolbar Tier on Mobile */}
             <div className="header-utility-actions">
-              <button
-                type="button"
-                onClick={onToggleMusic}
-                className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
-                title={musicPlaying ? 'Bấm để tắt nhạc Cúp C1' : 'Bấm để bật lại nhạc Cúp C1'}
-              >
-                <Music size={12} />
-                <span>{musicPlaying ? '♫ Bật' : '♫ Tắt'}</span>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: '1.1 1 0', minWidth: 0 }}>
+                <button
+                  type="button"
+                  onClick={onToggleMusic}
+                  className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
+                  style={{ flex: 1, minWidth: 0, padding: '7px 4px !important', justifyContent: 'center' }}
+                  title={musicPlaying ? `Đang phát: ${currentTrack?.title || 'Nhạc'} (Bấm để tắt)` : 'Bấm để bật nhạc'}
+                >
+                  <Music size={12} className={musicPlaying ? "spin-music" : ""} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {musicPlaying ? '♫ Bật' : '♫ Tắt'}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onOpenMusicModal) onOpenMusicModal();
+                    else if (onNextTrack) onNextTrack();
+                  }}
+                  className="btn btn-header"
+                  style={{
+                    padding: '7px 5px !important',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    color: '#00F298',
+                    flexShrink: 0
+                  }}
+                  title="Danh sách bài hát & Đổi nhạc"
+                >
+                  <ListMusic size={12} />
+                </button>
+              </div>
 
               <button
                 type="button"
@@ -123,15 +150,39 @@ export default function Header({
           </>
         ) : (
           <div className="header-guest-actions">
-            <button
-              type="button"
-              onClick={onToggleMusic}
-              className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
-              title={musicPlaying ? 'Bấm để tắt nhạc Cúp C1' : 'Bấm để bật lại nhạc Cúp C1'}
-            >
-              <Music size={12} />
-              <span>{musicPlaying ? '♫ Bật' : '♫ Tắt'}</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: '1 1 0', minWidth: 0 }}>
+              <button
+                type="button"
+                onClick={onToggleMusic}
+                className={`btn btn-header ${musicPlaying ? 'btn-header-music-on' : 'btn-header-music-off'}`}
+                style={{ flex: 1, minWidth: 0, padding: '7px 4px !important', justifyContent: 'center' }}
+                title={musicPlaying ? `Đang phát: ${currentTrack?.title || 'Nhạc'} (Bấm để tắt)` : 'Bấm để bật nhạc'}
+              >
+                <Music size={12} className={musicPlaying ? "spin-music" : ""} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {musicPlaying ? '♫ Bật' : '♫ Tắt'}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onOpenMusicModal) onOpenMusicModal();
+                  else if (onNextTrack) onNextTrack();
+                }}
+                className="btn btn-header"
+                style={{
+                  padding: '7px 5px !important',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  color: '#00F298',
+                  flexShrink: 0
+                }}
+                title="Danh sách bài hát & Đổi nhạc"
+              >
+                <ListMusic size={12} />
+              </button>
+            </div>
 
             <button
               type="button"
