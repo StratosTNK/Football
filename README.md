@@ -1,4 +1,4 @@
-# ⚽ Chia Đội Đá Banh Online (Football Squad Balancer)
+# ⚽ DSU TK Football Club (Football Squad Balancer)
 
 Ứng dụng web điểm danh và chia đội bóng đá trực tuyến theo thời gian thực (Realtime), được tối ưu hóa cho màn hình điện thoại (mobile-first) để gửi link qua các nhóm Zalo/Facebook.
 
