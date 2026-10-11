@@ -948,9 +948,6 @@ export default function PitchBillModal({
                             <div style={{ fontSize: '0.84rem', color: '#00F298', fontWeight: 800 }}>
                               Quét QR tự điền số tiền: {formatVND(perPlayer)}đ
                             </div>
-                            <div style={{ fontSize: '0.74rem', color: '#FFB800', marginTop: '3px', fontWeight: 600 }}>
-                              📝 Nhớ ghi kèm Tên của mình khi chuyển khoản nhé!
-                            </div>
                             <button
                               type="button"
                               onClick={() => setZoomQR(true)}
@@ -1444,9 +1441,6 @@ export default function PitchBillModal({
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '0.92rem', color: '#080E17', fontWeight: 800 }}>
                 Quét QR tự điền số tiền: {formatVND(perPlayer)}đ
-              </div>
-              <div style={{ fontSize: '0.76rem', color: '#D97706', marginTop: '3px', fontWeight: 700 }}>
-                📝 Nhớ ghi kèm Tên của mình khi chuyển khoản nhé!
               </div>
             </div>
 
