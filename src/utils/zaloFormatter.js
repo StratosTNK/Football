@@ -178,7 +178,7 @@ export const formatPitchBillForZalo = (match, bill) => {
     text += `🏦 Ngân hàng: ${bank.bankName}\n`;
     text += `🔢 STK: ${bank.accountNo}\n`;
     if (bank.accountName) text += `👤 Tên chủ TK: ${bank.accountName.toUpperCase()}\n`;
-    if (bank.transferContent) text += `📝 Nội dung: ${bank.transferContent}\n`;
+    text += `📝 Nội dung: [Tên của bạn] chuyển tiền sân\n`;
     if (bill.qrUrl) text += `📲 Link quét mã QR: ${bill.qrUrl}\n`;
   }
 

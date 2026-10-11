@@ -165,11 +165,10 @@ export default function PitchBillModal({
 
   const selectedBankObj = VIET_BANKS.find(b => b.code === bankCode) || VIET_BANKS[0];
   const cleanAccNo = accountNo.trim();
-  const transferMsg = customContent.trim() || `Tien san ${match?.matchDate || ''}`;
 
-  // VietQR URL generation
+  // VietQR URL generation (không thêm addInfo để app ngân hàng không tự điền nội dung cố định)
   const qrUrl = (cleanAccNo && selectedBankObj)
-    ? `https://img.vietqr.io/image/${selectedBankObj.code}-${cleanAccNo}-compact2.png?amount=${perPlayer}&addInfo=${encodeURIComponent(transferMsg)}&accountName=${encodeURIComponent(accountName.trim())}`
+    ? `https://img.vietqr.io/image/${selectedBankObj.code}-${cleanAccNo}-compact2.png?amount=${perPlayer}&accountName=${encodeURIComponent(accountName.trim())}`
     : '';
 
   const formatVND = (num) => new Intl.NumberFormat('vi-VN').format(Math.round(num || 0));
@@ -234,7 +233,7 @@ export default function PitchBillModal({
           bankName: selectedBankObj.name,
           accountNo: cleanAccNo,
           accountName: accountName.trim(),
-          transferContent: transferMsg
+          transferContent: ''
         },
         qrUrl,
         updatedAt: new Date().toISOString()
@@ -282,7 +281,7 @@ export default function PitchBillModal({
         bankName: selectedBankObj.name,
         accountNo: cleanAccNo,
         accountName: accountName.trim(),
-        transferContent: transferMsg
+        transferContent: ''
       },
       qrUrl
     };
@@ -852,26 +851,8 @@ export default function PitchBillModal({
                         </div>
                       </div>
 
-                      <div>
-                        <label style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '3px' }}>
-                          Nội dung chuyển khoản gợi ý:
-                        </label>
-                        <input
-                          type="text"
-                          value={customContent}
-                          onChange={(e) => setCustomContent(e.target.value)}
-                          placeholder="Tien san..."
-                          style={{
-                            width: '100%',
-                            padding: '8px 10px',
-                            borderRadius: '8px',
-                            background: 'rgba(0, 0, 0, 0.4)',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            color: '#fff',
-                            fontSize: '0.82rem',
-                            boxSizing: 'border-box'
-                          }}
-                        />
+                      <div style={{ fontSize: '0.74rem', color: '#00F298', fontStyle: 'italic', background: 'rgba(0, 242, 152, 0.08)', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(0, 242, 152, 0.2)' }}>
+                        💡 Mã QR sẽ không khóa nội dung cố định để anh em tự nhập Tên của mình khi chuyển khoản (giúp Admin dễ đối soát bill).
                       </div>
                     </div>
                   )}
@@ -964,11 +945,11 @@ export default function PitchBillModal({
                           </div>
 
                           <div style={{ textAlign: 'center', width: '100%' }}>
-                            <div style={{ fontSize: '0.82rem', color: '#00F298', fontWeight: 800 }}>
+                            <div style={{ fontSize: '0.84rem', color: '#00F298', fontWeight: 800 }}>
                               Quét QR tự điền số tiền: {formatVND(perPlayer)}đ
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '2px' }}>
-                              Nội dung: <strong style={{ color: '#fff' }}>{transferMsg}</strong>
+                            <div style={{ fontSize: '0.74rem', color: '#FFB800', marginTop: '3px', fontWeight: 600 }}>
+                              📝 Nhớ ghi kèm Tên của mình khi chuyển khoản nhé!
                             </div>
                             <button
                               type="button"
@@ -1461,11 +1442,11 @@ export default function PitchBillModal({
             />
 
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.9rem', color: '#080E17', fontWeight: 800 }}>
+              <div style={{ fontSize: '0.92rem', color: '#080E17', fontWeight: 800 }}>
                 Quét QR tự điền số tiền: {formatVND(perPlayer)}đ
               </div>
-              <div style={{ fontSize: '0.74rem', color: '#666', marginTop: '2px' }}>
-                Nội dung: <strong>{transferMsg}</strong>
+              <div style={{ fontSize: '0.76rem', color: '#D97706', marginTop: '3px', fontWeight: 700 }}>
+                📝 Nhớ ghi kèm Tên của mình khi chuyển khoản nhé!
               </div>
             </div>
 
